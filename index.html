@@ -416,6 +416,19 @@ footer .tm { font-size: .76rem; color: var(--faint); max-width: 90ch; }
 .tile:hover { border-color: rgb(154 43 67 / .7); }
 .faq summary::after { color: var(--burgundy-ink); }
 ::selection { background: rgb(154 43 67 / .6); }
+
+/* About the creator */
+.about { padding-block: 40px 96px; }
+.about .card { position: relative; overflow: hidden; border-radius: 28px; padding: clamp(28px, 6vw, 64px); background: radial-gradient(36rem 22rem at 100% 0%, rgb(154 43 67 / .28), transparent 70%), radial-gradient(30rem 20rem at 0% 100%, rgb(47 198 180 / .1), transparent 70%), var(--bg-2); border: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1.3fr; gap: clamp(28px, 5vw, 64px); }
+.about h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -0.045em; line-height: 1.02; }
+.about h2 .grad { display: block; }
+.about .side { display: grid; gap: 22px; align-content: start; }
+.about blockquote { margin: 0; padding-left: 18px; border-left: 2px solid var(--burgundy-hi); font-family: var(--display); font-variation-settings: "opsz" 144, "SOFT" 60, "WONK" 0; font-weight: 440; font-size: clamp(1.3rem, 2.4vw, 1.7rem); line-height: 1.25; letter-spacing: -0.02em; color: var(--ink); }
+.about .sig { color: var(--muted); font-size: .9rem; }
+.about .body { display: grid; gap: 16px; color: var(--muted); font-size: 1.02rem; max-width: 62ch; }
+.about .body strong { color: var(--ink); font-weight: 600; }
+.about .body em { color: var(--champagne-hi); font-style: italic; }
+@media (max-width: 800px) { .about .card { grid-template-columns: 1fr; } }
 </style>
 
 <script type="application/ld+json">
@@ -634,6 +647,27 @@ footer .tm { font-size: .76rem; color: var(--faint); max-width: 90ch; }
   </div>
 </section>
 </main>
+
+<section class="about" id="about" aria-labelledby="about-h">
+  <div class="wrap">
+    <div class="card">
+      <div class="side">
+        <span class="label">About the creator</span>
+        <h2 id="about-h">Built independently at 18. <span class="grad">Made by a producer, for producers.</span></h2>
+        <blockquote>What if I could talk to FL Studio the same way I talk to ChatGPT?</blockquote>
+        <p class="sig">Valenti Labs · California</p>
+      </div>
+      <div class="body">
+        <p>I'm an 18-year-old developer and music producer from California. I created <strong>Veloura</strong> because I wanted to change the way people interact with their DAW.</p>
+        <p>As someone who makes music myself, I've experienced <em>beat block</em> firsthand. Sometimes you have an idea for a melody, a drum pattern, or an entire beat, but turning that idea into something real can feel almost impossible. I started wondering: <strong>What if I could talk to FL Studio the same way I talk to ChatGPT?</strong> That question became the foundation of Veloura.</p>
+        <p>I built Veloura independently through <em>vibe coding</em>, using AI-assisted development to turn my ideas into a working application. I'm not a traditional software engineer, but I believe having a vision, understanding a problem, and being willing to experiment can be just as important as knowing how to code.</p>
+        <p>My goal was never to replace the creativity behind music production. I specifically wanted to bring AI directly into a DAW so producers could use what it generates as inspiration, then manually build on those ideas and take them to the next level with their own creativity. Whether you're a beginner learning how to make beats or an experienced producer dealing with beat block, I wanted to make it easier to turn ideas into something you can actually hear and work with.</p>
+        <p>Veloura is still in its early stages, and I'm continuing to improve it as I learn. It combines the two things I'm most passionate about: <strong>music and technology</strong>.</p>
+        <p>I believe the future belongs to AI and the creativity of the next generation. I want to help bring music production into that future by introducing a new way for people to interact with their DAWs, where AI opens up new possibilities. My vision is for Veloura to help shape that future and give young creators the tools to turn their ideas into something real.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <div class="details" id="details">
   <div class="wrap">
