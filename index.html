@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Veloura Beta: Free AI Beat Maker for FL Studio (Mac)</title>
+<meta name="description" content="Veloura Beta is a free AI beat maker for FL Studio on Mac. Type a prompt and it writes chords, melodies, 808s and drums as real, editable MIDI in your project. Runs on your paid ChatGPT plan.">
+<link rel="canonical" href="https://velouramusic.com/">
+<meta name="theme-color" content="#0E0F14">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Veloura Beta">
+<meta property="og:title" content="Veloura Beta: type a prompt, get a beat in FL Studio">
+<meta property="og:description" content="Free beta for Mac. Chords, melody, 808 and drums written straight into FL Studio, on your own ChatGPT plan.">
+<meta property="og:url" content="https://velouramusic.com/">
+<meta property="og:image" content="https://velouramusic.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT,WONK@144,460,60,0&display=swap">
+<style>
+/* Layout: unchanged from the Veloura site (dark studio, live app window, big statements, details at the bottom). Veloura layer: Electric Champagne system, an editorial serif for a few accent words, and a handful of ink-line ornaments drawn by hand. Single committed dark theme. */
+:root {
+  /* studio darks */
+  --bg: #0E0F14;            /* Deep Sable */
+  --bg-deep: #08080C;       /* rich near-black */
+  --bg-2: #13131A;          /* sable charcoal */
+  --plum: #231A2E;          /* deep plum-gray */
+  --midnight: #111733;      /* dark midnight blue */
+  --surface: #1D1D26;       /* Studio Charcoal */
+  --surface-2: #2C2B37;     /* Warm Graphite */
+  --surface-3: #3B3A49;
+  --border: #4A4858;        /* Smoky Slate */
+  --line: rgb(255 248 237 / .08);
+  --glass: rgb(29 29 38 / .62);
+  --glass-line: rgb(255 248 237 / .1);
+  --glass-hi: rgb(255 248 237 / .07);
+  /* text */
+  --ink: #FFF8ED;           /* Champagne Ivory */
+  --muted: #D3C5C0;         /* Soft Stone */
+  --faint: #968A8C;
+  /* warm metals */
+  --champagne: #FFCC6A;     /* Electric Champagne */
+  --champagne-hi: #FFE4A6;  /* bright champagne */
+  --brass: #C9A25E;         /* muted brass */
+  --gold: #B8893E;          /* antique gold */
+  --bronze: #A8744F;        /* soft bronze */
+  --on-champagne: #221B10;
+  /* artisan naturals */
+  --rose: #FF9479;
+  --ruby: #E8173F;          /* deep vibrant red, hearts */
+  --ruby-hi: #FF4D68;          /* Warm Rose */
+  --clay: #C98B6B;          /* warm clay */
+  --terracotta: #C2664B;
+  --sage: #7FE0D0;          /* light teal (was sage) */          /* botanical sage */
+  --eucalyptus: #1E8C80;    /* deep teal */
+  /* modern accents, used sparingly */
+  --lavender: #F4C9D1;      /* burgundy blush (was lavender) */
+  --seaglass: #2FC6B4;       /* Midnight Teal, bright */
+  --teal-deep: #0A2A2A; --teal: #0F5650;
+  --mineral: #7FE0D0;
+  /* status */
+  --ok: #7FE0D0;
+  --warn: #FFCC6A;
+  --err: #FF5A4E;
+  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, "Helvetica Neue", system-ui, sans-serif;
+  --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --serif: "Instrument Serif", "New York", "Iowan Old Style", Georgia, serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 17px; line-height: 1.5; letter-spacing: -0.005em; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+::selection { background: rgb(255 204 106 / .35); color: var(--ink); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { margin: 0; line-height: 1.02; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--champagne); }
+:focus-visible { outline: 2px solid var(--champagne); outline-offset: 3px; border-radius: 6px; }
+/* accent words: editorial serif italic in champagne */
+.grad { font-family: var(--display); font-style: normal; font-weight: 460; font-variation-settings: "opsz" 144, "SOFT" 60, "WONK" 0; letter-spacing: -0.04em; background: linear-gradient(100deg, var(--champagne-hi) 0%, var(--champagne) 42%, #FF8A5C 78%, #FF6F7D 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em; }
+.kicker { font-size: .74rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; color: var(--champagne); }
+.glass { background: var(--glass); -webkit-backdrop-filter: blur(28px) saturate(1.4); backdrop-filter: blur(28px) saturate(1.4); border: 1px solid var(--glass-line); box-shadow: inset 0 1px 0 var(--glass-hi), 0 24px 60px rgb(8 8 12 / .45); border-radius: 18px; transition: border-color .3s var(--ease), transform .3s var(--ease); }
+.beta { display: inline-flex; align-items: center; font-size: .64rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--champagne); border: 1px solid rgb(255 204 106 / .4); background: rgb(255 204 106 / .1); padding: 2px 7px; border-radius: 6px; line-height: 1.4; }
+
+/* hand-drawn ornaments */
+.orn { width: 120px; height: 22px; color: var(--brass); opacity: .9; }
+.orn path, .ink path { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.orn circle { fill: currentColor; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; font: 600 .95rem var(--ui); padding: 11px 20px; border-radius: 12px; border: 1px solid transparent; cursor: pointer; text-decoration: none; color: var(--ink); transition: transform .18s var(--ease), filter .18s var(--ease), border-color .18s, box-shadow .18s; }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: linear-gradient(180deg, var(--champagne-hi), var(--champagne) 55%, #EDB95E); color: var(--on-champagne); box-shadow: 0 0 0 1px rgb(255 204 106 / .55), 0 8px 26px rgb(255 204 106 / .22), inset 0 1px 0 rgb(255 255 255 / .5); }
+.btn-primary:hover { filter: brightness(1.05); box-shadow: 0 0 0 1px rgb(255 204 106 / .7), 0 10px 30px rgb(255 204 106 / .3), inset 0 1px 0 rgb(255 255 255 / .5); }
+.btn-ghost { background: rgb(255 248 237 / .05); border-color: var(--glass-line); }
+.btn-ghost:hover { border-color: rgb(255 204 106 / .45); }
+.btn-heart { background: linear-gradient(180deg, #FF5C74, var(--ruby) 58%, #C10E31); color: #FFF5F3; text-shadow: 0 1px 0 rgb(120 0 20 / .35); box-shadow: 0 0 0 1px rgb(255 77 104 / .6), 0 8px 26px rgb(232 23 63 / .35), inset 0 1px 0 rgb(255 255 255 / .35); }
+.btn-heart:hover { filter: brightness(1.08) saturate(1.05); box-shadow: 0 0 0 1px rgb(255 77 104 / .7), 0 12px 32px rgb(232 23 63 / .45), inset 0 1px 0 rgb(255 255 255 / .35); }
+.btn svg { width: 18px; height: 18px; flex: none; }
+
+/* the big download button */
+.dl-wrap { position: relative; display: inline-grid; justify-items: center; }
+.dl-btn { position: relative; display: inline-flex; align-items: center; gap: 16px; padding: 18px 30px 18px 22px; border-radius: 20px; text-decoration: none; color: var(--on-champagne); background: linear-gradient(180deg, #FFE7B8 0%, #FFD68C 46%, #EFC06C 100%); box-shadow: 0 0 0 1px rgb(255 230 176 / .65), 0 1px 2px rgb(0 0 0 / .25), 0 12px 32px rgb(255 204 106 / .16), 0 1px 0 rgb(255 255 255 / .6) inset, 0 -1px 0 rgb(120 80 20 / .18) inset; overflow: hidden; isolation: isolate; transition: transform .25s var(--ease), box-shadow .25s var(--ease), filter .25s var(--ease); }
+.dl-btn::before { content: ""; position: absolute; inset: -40% auto -40% -30%; width: 40%; background: linear-gradient(90deg, transparent, rgb(255 255 255 / .55), transparent); transform: skewX(-20deg); animation: sweep 6s ease-in-out infinite; z-index: -1; }
+@keyframes sweep { 0%, 70% { left: -40%; } 100% { left: 130%; } }
+.dl-btn:hover { transform: translateY(-1px); filter: brightness(1.03); box-shadow: 0 0 0 1px rgb(255 230 176 / .85), 0 2px 4px rgb(0 0 0 / .25), 0 16px 40px rgb(255 204 106 / .22), 0 1px 0 rgb(255 255 255 / .6) inset, 0 -1px 0 rgb(120 80 20 / .18) inset; }
+.dl-btn:active { transform: translateY(0) scale(.985); filter: brightness(.97); transition-duration: .08s; box-shadow: 0 0 0 1px rgb(255 230 176 / .7), 0 1px 1px rgb(0 0 0 / .3), 0 6px 18px rgb(255 204 106 / .14), 0 1px 3px rgb(120 80 20 / .25) inset; }
+.dl-btn:focus-visible { outline: 2px solid var(--champagne-hi); outline-offset: 4px; border-radius: 20px; }
+.dl-btn .eq { display: flex; align-items: center; gap: 3px; height: 30px; }
+.dl-btn .eq i { width: 4px; border-radius: 3px; background: var(--on-champagne); height: var(--h); animation: eq 1.2s ease-in-out infinite; animation-delay: var(--d); }
+@keyframes eq { 50% { height: calc(var(--h) * .45); } }
+.dl-btn .t { display: grid; text-align: left; line-height: 1.15; }
+.dl-btn .t b { font-size: 1.22rem; font-weight: 700; letter-spacing: -0.02em; }
+.dl-btn .t small { font-size: .78rem; opacity: .75; font-weight: 500; }
+.note { position: absolute; left: calc(100% + 14px); top: -18px; display: flex; align-items: flex-start; gap: 4px; color: var(--rose); font-family: var(--serif); font-style: italic; font-size: 1.25rem; white-space: nowrap; pointer-events: none; }
+.note svg { width: 56px; height: 46px; margin-top: 12px; }
+.note .ink path { stroke-width: 1.5; }
+@media (max-width: 760px) { .note { display: none; } }
+
+/* nav */
+nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: rgb(14 15 20 / .72); -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4); border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+nav::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, transparent, rgb(255 204 106 / .7) 30%, rgb(255 111 125 / .7) 60%, rgb(244 201 209 / .55) 80%, transparent); pointer-events: none; }
+nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 11px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.08rem; letter-spacing: -0.015em; color: var(--ink); text-decoration: none; }
+.brand svg { width: 28px; height: 28px; flex: none; }
+nav .links { display: flex; gap: 8px; align-items: center; }
+nav .links a.txt { color: var(--muted); text-decoration: none; font-size: .9rem; padding: 6px 10px; transition: color .2s; }
+nav .links a.txt:hover { color: var(--ink); }
+nav .btn { padding: 8px 14px; font-size: .88rem; border-radius: 10px; }
+@media (max-width: 760px) { nav .links a.txt { display: none; } }
+@media (max-width: 420px) { nav .support-nav span { display: none; } nav .support-nav { padding: 8px 10px; } }
+
+/* warm light, not moving */
+.aurora { position: absolute; inset: 0; overflow: hidden; z-index: -1; pointer-events: none; }
+.aurora i { position: absolute; border-radius: 50%; filter: blur(90px); }
+.aurora i:nth-child(1) { width: 44rem; height: 44rem; left: -16rem; top: -20rem; background: radial-gradient(circle, rgb(255 204 106 / .34), transparent 65%); }
+.aurora i:nth-child(2) { width: 38rem; height: 38rem; right: -14rem; top: -8rem; background: radial-gradient(circle, rgb(255 111 125 / .3), transparent 65%); }
+.aurora i:nth-child(3) { width: 34rem; height: 34rem; left: 30%; top: 30rem; background: radial-gradient(circle, rgb(35 26 46 / .9), transparent 65%); }
+.aurora i:nth-child(4) { width: 26rem; height: 26rem; right: 8%; top: 36rem; background: radial-gradient(circle, rgb(47 198 180 / .12), transparent 65%); }
+.grain { position: absolute; inset: 0; z-index: -1; pointer-events: none; background-image: radial-gradient(rgb(255 248 237 / .03) 1px, transparent 1px); background-size: 22px 22px; mask-image: linear-gradient(180deg, #000 0%, transparent 85%); -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%); }
+
+/* hero */
+.hero { position: relative; isolation: isolate; }
+.hero > .wrap { display: grid; justify-items: center; text-align: center; gap: 26px; padding-block: 72px 40px; }
+.hero h1 { font-size: clamp(3rem, 9vw, 7rem); font-weight: 800; letter-spacing: -0.05em; line-height: .95; padding-bottom: .06em; }
+.hero h1 span { display: block; }
+.hero h1 .grad { font-size: 1.04em; line-height: .98; margin-top: .02em; position: relative; display: inline-block; }
+.hero h1 .ul { position: absolute; left: 3%; bottom: -.16em; height: .2em; width: 95%; color: var(--champagne); overflow: visible; opacity: .92; animation: reveal 1.1s .5s cubic-bezier(.6,.05,.25,1) both; }
+.hero h1 .ul path { fill: url(#ulg); }
+@keyframes reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes draw { from { stroke-dashoffset: 700; } to { stroke-dashoffset: 0; } }
+.hero .sub { font-size: clamp(1.05rem, 2vw, 1.3rem); color: var(--muted); max-width: 36ch; }
+.hero .cta { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center; }
+.reqs { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.req { display: inline-flex; align-items: center; gap: 8px; font-size: .84rem; font-weight: 600; color: var(--ink); padding: 7px 13px 7px 10px; border-radius: 999px; background: rgb(255 248 237 / .05); border: 1px solid var(--glass-line); }
+.req svg { width: 17px; height: 17px; flex: none; color: var(--champagne); }
+.req em { font-style: normal; color: var(--muted); font-weight: 500; }
+
+/* the live app window */
+.stage { padding-block: 10px 90px; position: relative; }
+.win { max-width: 940px; margin: 0 auto; border-radius: 20px; overflow: hidden; }
+.win-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: rgb(255 248 237 / .025); }
+.win-bar .dots { display: flex; gap: 7px; }
+.win-bar .dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--surface-3); }
+.win-bar .dots i:nth-child(1) { background: #FF5F57; } .win-bar .dots i:nth-child(2) { background: #FEBC2E; } .win-bar .dots i:nth-child(3) { background: #28C840; }
+.win-bar .ttl { flex: 1; text-align: center; font-size: .8rem; font-weight: 600; color: var(--muted); margin-right: 50px; }
+.win-body { padding: 18px; display: grid; gap: 14px; }
+.ask { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 14px; background: rgb(255 248 237 / .05); border: 1px solid var(--glass-line); min-width: 0; }
+.ask .txt { flex: 1; min-width: 0; text-align: left; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ask .txt::after { content: ""; display: inline-block; width: 2px; height: 1.1em; background: var(--champagne); vertical-align: -0.2em; margin-left: 2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.ask .state { font-family: var(--mono); font-size: .74rem; color: var(--muted); white-space: nowrap; }
+.ask .state.go { color: var(--champagne); }
+.ask .state.ok { color: var(--ok); }
+.ask .send { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(180deg, var(--champagne-hi), var(--champagne)); color: var(--on-champagne); font-weight: 700; box-shadow: 0 4px 16px rgb(255 204 106 / .3); }
+.meta-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-family: var(--mono); font-size: .74rem; color: var(--muted); }
+.meta-row b { color: var(--ink); font-weight: 500; }
+.lanes { display: grid; gap: 8px; position: relative; }
+.lane { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; }
+.lane > span { font-size: .72rem; font-weight: 600; color: var(--muted); text-align: left; display: flex; align-items: center; gap: 6px; }
+.lane > span::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px color-mix(in srgb, var(--c) 60%, transparent); flex: none; }
+.grid16 { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; }
+.grid16 i { aspect-ratio: 1 / 1.1; border-radius: 4px; background: rgb(255 248 237 / .045); max-width: 100%; transition: transform .1s, background .25s, box-shadow .25s; }
+.grid16 i:nth-child(8n+1), .grid16 i:nth-child(8n+2), .grid16 i:nth-child(8n+3), .grid16 i:nth-child(8n+4) { background: rgb(255 248 237 / .08); }
+.grid16 i.on { background: linear-gradient(180deg, color-mix(in srgb, var(--c) 55%, white), var(--c)); box-shadow: 0 0 10px color-mix(in srgb, var(--c) 40%, transparent); }
+.grid16 i.on.soft { opacity: .55; }
+.grid16 i.hit { transform: scaleY(1.18); filter: brightness(1.2); }
+.roll { position: relative; height: 54px; border-radius: 6px; background: repeating-linear-gradient(90deg, rgb(255 248 237 / .05) 0 1px, transparent 1px calc(100% / 16)), repeating-linear-gradient(180deg, rgb(255 248 237 / .03) 0 1px, transparent 1px 9px), rgb(255 248 237 / .025); overflow: hidden; }
+.roll.tall { height: 70px; }
+.roll b { position: absolute; height: 8px; border-radius: 3px; background: linear-gradient(180deg, color-mix(in srgb, var(--c) 50%, white), var(--c)); box-shadow: 0 0 8px color-mix(in srgb, var(--c) 45%, transparent); transform-origin: left center; transition: transform .35s var(--ease), opacity .35s, filter .1s; }
+.roll b.hide { transform: scaleX(0); opacity: 0; }
+.roll b.hit { filter: brightness(1.35); }
+.head { position: absolute; top: -4px; bottom: -4px; width: 2px; left: 74px; background: var(--champagne); box-shadow: 0 0 12px rgb(255 204 106 / .7); border-radius: 2px; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.head.on { opacity: .9; }
+.win-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; font-size: .78rem; color: var(--muted); }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgb(127 224 208 / .14); color: var(--ok); font-weight: 600; font-size: .74rem; opacity: 0; transform: translateY(4px); transition: opacity .3s, transform .3s; }
+.chip.show { opacity: 1; transform: none; }
+@media (max-width: 560px) { .lane { grid-template-columns: 44px 1fr; gap: 6px; } .lane > span { font-size: .64rem; } .lane > span::before { display: none; } .grid16 { gap: 2px; } .grid16 i { border-radius: 3px; } .head { left: 50px; } .ask .state { display: none; } .win-body { padding: 12px; } }
+
+/* sections */
+section { position: relative; padding-block: clamp(72px, 10vw, 130px); }
+.statement { text-align: center; display: grid; gap: 16px; justify-items: center; }
+.statement h2 { font-size: clamp(2.4rem, 6.4vw, 5rem); font-weight: 800; letter-spacing: -0.045em; padding-bottom: .05em; }
+.statement h2 .grad { font-size: 1.1em; }
+.statement p { color: var(--muted); font-size: clamp(1rem, 1.8vw, 1.2rem); max-width: 36ch; }
+
+/* gentle entrances: content stays readable before it moves */
+.rise { transition: transform .9s var(--ease), opacity .9s var(--ease); }
+.rise.pre { transform: translateY(18px); opacity: .4; }
+
+/* three tiles */
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 56px; }
+.tile { padding: 26px; display: grid; gap: 18px; align-content: space-between; min-height: 300px; min-width: 0; position: relative; overflow: hidden; }
+.tile:hover { border-color: rgb(255 204 106 / .28); transform: translateY(-2px); }
+.tile h3 { font-size: clamp(1.7rem, 3vw, 2.2rem); font-weight: 800; letter-spacing: -0.04em; }
+.tile p { color: var(--muted); font-size: .92rem; }
+.tile .viz { height: 130px; position: relative; }
+@media (max-width: 860px) { .tiles { grid-template-columns: 1fr; } .tile { min-height: 0; } }
+.mini-roll { position: absolute; inset: 0; border-radius: 10px; background: repeating-linear-gradient(90deg, rgb(255 248 237 / .05) 0 1px, transparent 1px 12.5%), repeating-linear-gradient(180deg, rgb(255 248 237 / .035) 0 1px, transparent 1px 13px); }
+.mini-roll b { position: absolute; height: 11px; border-radius: 3px; background: linear-gradient(180deg, #C9F3EC, var(--sage)); box-shadow: 0 0 8px rgb(127 224 208 / .35); transform-origin: left; animation: grow 4s var(--ease) infinite; animation-delay: var(--d); }
+@keyframes grow { 0% { transform: scaleX(0); opacity: 0; } 12%, 80% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+.pads { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+.pads i { border-radius: 9px; background: rgb(255 248 237 / .05); border: 1px solid rgb(255 248 237 / .05); animation: pad 2.4s steps(1) infinite; animation-delay: var(--d); --c: var(--seaglass); }
+@keyframes pad { 0% { background: var(--c); box-shadow: 0 0 16px color-mix(in srgb, var(--c) 60%, transparent); } 8% { background: rgb(255 248 237 / .05); box-shadow: none; } }
+.undo { position: absolute; inset: 0; display: grid; place-items: center; }
+.undo .notes { position: absolute; inset: 0; }
+.undo .notes b { position: absolute; height: 11px; border-radius: 3px; background: linear-gradient(180deg, #FBE3E8, var(--lavender)); box-shadow: 0 0 8px rgb(244 201 209 / .35); animation: wipe 4s ease-in-out infinite; }
+@keyframes wipe { 0%, 55% { opacity: 1; transform: none; } 70%, 92% { opacity: 0; transform: translateX(-14px) scale(.8); } 100% { opacity: 1; transform: none; } }
+.undo svg { width: 54px; height: 54px; stroke: var(--champagne); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: 0; animation: undoIcon 4s ease-in-out infinite; position: relative; }
+@keyframes undoIcon { 0%, 50% { opacity: 0; transform: rotate(40deg) scale(.8); } 62% { opacity: 1; transform: none; } 88% { opacity: 1; } 100% { opacity: 0; } }
+
+/* genre marquee */
+.marquee { overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); margin-top: 44px; }
+.marquee .track { display: flex; gap: 12px; width: max-content; animation: scroll 50s linear infinite; }
+.marquee span { font-size: clamp(1.1rem, 2.4vw, 1.6rem); font-weight: 600; letter-spacing: -0.02em; padding: 10px 20px; border-radius: 999px; border: 1px solid var(--glass-line); background: rgb(255 248 237 / .035); white-space: nowrap; color: var(--muted); }
+.marquee span:nth-child(4n+1) { color: var(--champagne); } .marquee span:nth-child(4n+2) { color: var(--rose); } .marquee span:nth-child(4n+3) { color: var(--sage); } .marquee span:nth-child(4n+4) { color: var(--seaglass); }
+.marquee span:nth-child(odd) { font-family: var(--display); font-style: normal; font-variation-settings: "opsz" 144, "SOFT" 60, "WONK" 0; font-weight: 440; letter-spacing: -0.02em; font-size: clamp(1.25rem, 2.7vw, 1.8rem); }
+@keyframes scroll { to { transform: translateX(-50%); } }
+
+/* ChatGPT section */
+.gpt { display: grid; grid-template-columns: 1fr 1.1fr; gap: 28px; align-items: center; margin-top: 56px; }
+.gpt-card { padding: 32px; display: grid; gap: 20px; min-width: 0; position: relative; overflow: hidden; }
+.gpt-card::after { content: ""; position: absolute; width: 22rem; height: 22rem; right: -8rem; top: -8rem; background: radial-gradient(circle, rgb(127 224 208 / .22), transparent 65%); pointer-events: none; }
+.gpt-card .row1 { display: flex; align-items: center; gap: 14px; }
+.gpt-card .mark { width: 54px; height: 54px; border-radius: 14px; background: #FFFFFF; display: grid; place-items: center; flex: none; }
+.gpt-card .mark img { width: 34px; height: 34px; }
+.gpt-card h3 { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.04em; }
+.gpt-card .rec { font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--sage); }
+.gpt-card .need { font-size: 1.15rem; font-weight: 600; }
+.gpt-card .need em { font-family: var(--display); font-style: normal; font-variation-settings: "opsz" 144, "SOFT" 60, "WONK" 0; font-weight: 460; font-size: 1.25em; color: var(--champagne); }
+.gpt-card p.small { color: var(--muted); font-size: .9rem; }
+.ladder { padding: 28px 28px 22px; min-width: 0; }
+.ladder .lh { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+.ladder .lh b { font-size: 1.05rem; }
+.ladder .lh span { font-size: .78rem; color: var(--muted); }
+.bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: end; height: 220px; }
+.bar { display: grid; grid-template-rows: 1fr auto; gap: 10px; height: 100%; min-width: 0; }
+.bar .col { align-self: end; height: var(--h); border-radius: 12px 12px 6px 6px; background: linear-gradient(180deg, var(--c1), var(--c2)); box-shadow: 0 0 22px color-mix(in srgb, var(--c1) 22%, transparent); position: relative; animation: breathe 3.6s ease-in-out infinite; animation-delay: var(--d); transform-origin: bottom; }
+@keyframes breathe { 50% { transform: scaleY(.94); } }
+.bar .col small { position: absolute; top: 8px; left: 0; right: 0; text-align: center; font-size: .62rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--on-champagne); }
+.bar .nm { text-align: center; font-weight: 700; font-size: .95rem; line-height: 1.15; }
+.bar .nm span { display: block; font-size: .72rem; color: var(--muted); font-weight: 500; }
+.others { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+.other { padding: 18px; display: flex; gap: 14px; align-items: center; min-width: 0; }
+.other img, .other .off { width: 34px; height: 34px; flex: none; }
+.other .off { border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; }
+.other .off svg { width: 18px; height: 18px; stroke: var(--champagne); fill: none; stroke-width: 2; stroke-linecap: round; }
+.other div { min-width: 0; }
+.other b { display: block; font-size: .98rem; }
+.other span { font-size: .8rem; color: var(--muted); }
+@media (max-width: 860px) { .gpt { grid-template-columns: 1fr; } .others { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .bars { gap: 8px; height: 190px; } .bar .nm { font-size: .82rem; } .bar .col small { font-size: .52rem; } }
+
+/* beta vs official */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 56px; }
+.app { border-radius: 24px; padding: clamp(26px, 4vw, 40px); display: grid; gap: 22px; align-content: start; min-height: 360px; position: relative; overflow: hidden; min-width: 0; }
+.app .st { display: inline-flex; align-items: center; gap: 8px; font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.app .st::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; animation: pulse 2.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+.app h3 { font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 800; letter-spacing: -0.05em; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.app .big { font-size: clamp(1.4rem, 2.6vw, 1.9rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
+.app ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.app li { font-size: .82rem; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: rgb(255 248 237 / .06); border: 1px solid var(--glass-line); }
+.app.now .st { color: var(--sage); }
+.app.next { background: radial-gradient(30rem 20rem at 100% 0%, rgb(255 204 106 / .22), transparent 70%), radial-gradient(30rem 20rem at 0% 100%, rgb(23 28 46 / .95), transparent 70%), var(--plum); border: 1px solid rgb(255 204 106 / .28); box-shadow: 0 30px 80px rgb(0 0 0 / .35); }
+.app.next .st { color: var(--champagne); }
+.app.next h3 { font-family: var(--display); font-style: normal; font-variation-settings: "opsz" 144, "SOFT" 60, "WONK" 0; font-weight: 460; font-size: clamp(2.6rem, 5.6vw, 4rem); letter-spacing: -0.04em; background: linear-gradient(100deg, var(--ink), var(--champagne-hi) 50%, var(--champagne)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.app.next .lock { position: absolute; right: -30px; bottom: -36px; width: 220px; height: 220px; color: var(--champagne); opacity: .2; }
+.app.next .lock svg { width: 100%; height: 100%; }
+.app.next::before { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgb(255 230 176 / .07) 45%, transparent 60%); background-size: 250% 100%; animation: shimmer 8s ease-in-out infinite; pointer-events: none; }
+@keyframes shimmer { 0% { background-position: 120% 0; } 100% { background-position: -120% 0; } }
+.vs-note { text-align: center; color: var(--muted); margin-top: 26px; font-size: .95rem; }
+@media (max-width: 760px) { .two { grid-template-columns: 1fr; } .app { min-height: 0; } }
+
+/* support band */
+.support { border-radius: 28px; padding: clamp(32px, 6vw, 64px); display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: center; background: radial-gradient(34rem 22rem at 0% 0%, rgb(232 23 63 / .28), transparent 70%), radial-gradient(30rem 22rem at 100% 100%, rgb(255 148 121 / .2), transparent 70%), #170A10; border: 1px solid rgb(255 77 104 / .3); overflow: hidden; position: relative; }
+.support h2 { font-size: clamp(2.2rem, 5.4vw, 4rem); font-weight: 800; letter-spacing: -0.045em; }
+.support p { color: #DCC7C2; font-size: 1.05rem; max-width: 34ch; }
+.support .copy { display: grid; gap: 18px; min-width: 0; position: relative; }
+.support .btn-heart { padding: 15px 26px; font-size: 1.05rem; border-radius: 14px; justify-self: start; }
+.support .sprig { position: absolute; left: -10px; bottom: -14px; width: 140px; height: 120px; color: rgb(127 224 208 / .5); pointer-events: none; }
+.heartviz { display: grid; place-items: center; min-height: 200px; }
+.heartviz svg { width: min(260px, 70vw); height: auto; overflow: visible; }
+.heartviz .h { fill: url(#hg); animation: beat 1.5s ease-in-out infinite; transform-origin: 130px 118px; filter: drop-shadow(0 0 26px rgb(232 23 63 / .55)); }
+@keyframes beat { 0%, 40%, 100% { transform: scale(1); } 15% { transform: scale(1.06); } 28% { transform: scale(1.02); } }
+.heartviz .wave { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 420; animation: trace 2.8s linear infinite; opacity: .9; }
+@keyframes trace { from { stroke-dashoffset: 420; } to { stroke-dashoffset: -420; } }
+@media (max-width: 760px) { .support { grid-template-columns: 1fr; } .heartviz { min-height: 140px; order: -1; } .support .sprig { display: none; } }
+
+/* final download */
+.final { text-align: center; display: grid; gap: 24px; justify-items: center; }
+.final h2 { font-size: clamp(2.6rem, 7vw, 5.4rem); font-weight: 800; letter-spacing: -0.05em; padding-bottom: .05em; }
+.final .small { color: var(--muted); font-size: .9rem; }
+.final .small a { color: var(--muted); }
+
+/* details */
+.details { background: var(--bg-deep); border-top: 1px solid var(--line); padding-block: 80px 40px; }
+.details > .wrap > h2 { font-size: 1.8rem; font-weight: 750; letter-spacing: -0.03em; margin-bottom: 8px; }
+.details > .wrap > h2 em { font-family: var(--display); font-style: normal; font-variation-settings: "opsz" 144, "SOFT" 60, "WONK" 0; font-weight: 460; letter-spacing: -0.03em; color: var(--champagne); }
+.details > .wrap > p.lead { color: var(--muted); margin-bottom: 36px; }
+.cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-bottom: 56px; }
+.cols > div { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.cols h3 { font-size: 1rem; font-weight: 700; }
+.cols ol, .cols ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; color: var(--muted); font-size: .92rem; }
+.cols ol li::marker { color: var(--champagne); }
+.cols dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; font-size: .92rem; }
+.cols dt { color: var(--muted); }
+.cols dd { margin: 0; min-width: 0; }
+@media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+.faq { display: grid; border-top: 1px solid var(--line); margin-bottom: 56px; }
+.faq details { border-bottom: 1px solid var(--line); padding-block: 15px; }
+.faq summary { cursor: pointer; font-weight: 600; font-size: 1rem; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; color: var(--champagne); font-weight: 400; font-size: 1.3rem; line-height: 1; transition: transform .25s var(--ease); }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq details p { color: var(--muted); margin-top: 10px; max-width: 70ch; font-size: .95rem; }
+.sec-head { display: grid; gap: 10px; margin-bottom: 28px; max-width: 62ch; }
+.sec-head h2 { font-size: 1.6rem; font-weight: 750; letter-spacing: -0.03em; }
+.sec-head p { color: var(--muted); }
+.label { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; color: var(--champagne); }
+#feedback, #legal { padding-block: 40px; }
+#feedback .wrap, #legal .wrap { padding-left: 0; padding-right: 0; }
+.legal { display: grid; border-top: 1px solid var(--line); }
+.legal > details { border-bottom: 1px solid var(--line); padding-block: 15px; }
+.legal summary { cursor: pointer; font-weight: 650; }
+.legal .doc { max-width: 70ch; display: grid; gap: 12px; margin-top: 14px; color: var(--muted); font-size: .92rem; min-width: 0; overflow-wrap: anywhere; }
+.legal .doc h4 { margin: 10px 0 0; color: var(--ink); font-size: .98rem; }
+.legal .doc ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.legal .doc strong { color: var(--ink); }
+.review { font-size: .8rem; font-weight: 600; color: var(--rose); }
+.fb { display: grid; grid-template-columns: 1fr 1.3fr; gap: 36px; align-items: start; }
+.fb form { padding: 24px; display: grid; gap: 12px; min-width: 0; }
+.fb label { font-size: .85rem; font-weight: 600; }
+.fb label span { font-weight: 400; color: var(--muted); }
+.fb input, .fb select, .fb textarea { font: 400 1rem var(--ui); padding: 11px 13px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); width: 100%; transition: border-color .2s; }
+.fb textarea { min-height: 130px; resize: vertical; }
+.fb input:focus, .fb select:focus, .fb textarea:focus { outline: 2px solid var(--champagne); outline-offset: 1px; border-color: transparent; }
+.fb .msg { font-size: .9rem; min-height: 1.4em; color: var(--muted); }
+.fb .msg.ok { color: var(--ok); }
+.fb .msg.err { color: var(--err); }
+.fb .hp { position: absolute; left: -9999px; }
+@media (max-width: 760px) { .fb { grid-template-columns: 1fr; } }
+
+footer { background: var(--bg-deep); }
+footer .wrap { padding-block: 28px 48px; display: grid; gap: 14px; color: var(--muted); font-size: .85rem; border-top: 1px solid var(--line); }
+footer .r { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px; align-items: center; }
+footer .sig { font-family: var(--display); font-style: normal; font-variation-settings: "opsz" 144, "SOFT" 60, "WONK" 0; font-weight: 500; font-size: 1.1rem; letter-spacing: -0.02em; color: var(--champagne); }
+footer a { color: var(--muted); text-decoration: none; transition: color .2s; }
+footer a:hover { color: var(--ink); }
+footer .ig { display: inline-flex; align-items: center; gap: 8px; }
+footer .ig svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+footer .tm { font-size: .76rem; color: var(--faint); max-width: 90ch; }
+.draft { background: linear-gradient(90deg, var(--bronze), var(--brass), var(--clay)); color: var(--on-champagne); text-align: center; font-size: .74rem; font-weight: 600; padding-block: 6px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* modal */
+.scrim { position: fixed; inset: 0; z-index: 50; background: rgb(10 10 14 / .6); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); opacity: 0; transition: opacity .3s var(--ease); }
+.scrim[hidden] { display: none; }
+.scrim.open { opacity: 1; }
+.modal { width: min(520px, 100%); max-height: 100%; overflow: auto; border-radius: 24px; background: var(--surface); border: 1px solid var(--glass-line); box-shadow: 0 40px 120px rgb(0 0 0 / .6); transform: translateY(14px) scale(.98); transition: transform .4s var(--ease); position: relative; }
+.scrim.open .modal { transform: none; }
+.modal .x { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgb(255 248 237 / .08); color: var(--ink); font-size: 1.1rem; cursor: pointer; display: grid; place-items: center; }
+.modal .top { padding: 28px 28px 22px; display: grid; gap: 12px; border-bottom: 1px solid var(--line); }
+.modal .top h3 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; padding-right: 30px; }
+.modal .top h3 em { font-family: var(--display); font-style: normal; font-variation-settings: "opsz" 144, "SOFT" 60, "WONK" 0; font-weight: 460; letter-spacing: -0.03em; color: var(--champagne); font-size: 1.15em; }
+.modal .top .ok { display: inline-flex; align-items: center; gap: 8px; color: var(--ok); font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+.modal ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: s; }
+.modal ol li { display: flex; gap: 12px; align-items: baseline; color: var(--muted); font-size: .93rem; counter-increment: s; }
+.modal ol li::before { content: counter(s); flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: .75rem; font-weight: 700; color: var(--on-champagne); background: linear-gradient(180deg, var(--champagne-hi), var(--champagne)); transform: translateY(4px); }
+.modal ol li b { color: var(--ink); font-weight: 600; }
+.modal .give { padding: 26px 28px 28px; display: grid; gap: 14px; background: radial-gradient(26rem 14rem at 100% 100%, rgb(255 148 121 / .2), transparent 70%), radial-gradient(20rem 12rem at 0% 0%, rgb(255 204 106 / .1), transparent 70%); }
+.modal .give h4 { margin: 0; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; display: flex; align-items: center; gap: 10px; }
+.modal .give h4 svg { width: 24px; height: 24px; fill: var(--rose); animation: beat 1.5s ease-in-out infinite; }
+.modal .give p { color: var(--muted); font-size: .93rem; }
+.modal .give .btn-heart { padding: 14px; font-size: 1.02rem; }
+.modal .give .later { justify-self: center; background: none; border: 0; color: var(--muted); font: 500 .85rem var(--ui); cursor: pointer; padding: 4px; }
+.modal .retry { font-size: .82rem; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
+  html { scroll-behavior: auto; }
+  .undo svg { opacity: 1; }
+  .rise.pre { transform: none; opacity: 1; }
+  .hero h1 .ul { animation: none; }
+}
+
+/* PALETTE RULE (2026-10-21): three families only. Champagne = main (headlines, primary buttons). Warm = rose, heart red, burgundy (support, 808, the paid app). Cool = Midnight Teal (drums, connected/success, available now, lead). No other hues. */
+/* Burgundy accent, niche use only: "Coming later" card, card hover, FAQ marker, text selection */
+:root { --burgundy: #6E1A2C; --burgundy-hi: #9A2B43; --burgundy-deep: #330B16; --burgundy-ink: #F4C9D1; }
+.app.next { background: radial-gradient(30rem 20rem at 100% 0%, rgb(255 204 106 / .16), transparent 70%), radial-gradient(34rem 24rem at 0% 100%, rgb(154 43 67 / .45), transparent 70%), linear-gradient(160deg, #3A0F1C, var(--burgundy-deep)); border-color: rgb(154 43 67 / .55); }
+.tile:hover { border-color: rgb(154 43 67 / .7); }
+.faq summary::after { color: var(--burgundy-ink); }
+::selection { background: rgb(154 43 67 / .6); }
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://velouramusic.com/#app",
+      "name": "Veloura Beta",
+      "alternateName": "Veloura Beta for FL Studio",
+      "description": "Free AI beat maker for FL Studio on Mac. Type a prompt and Veloura Beta writes chords, melodies, 808s and drums as editable MIDI in your FL Studio project. Runs on your paid ChatGPT plan, a Gemini API key or a Claude API key.",
+      "applicationCategory": "MultimediaApplication",
+      "applicationSubCategory": "Music production",
+      "operatingSystem": "macOS 13 or later (Apple silicon)",
+      "softwareVersion": "0.9",
+      "isAccessibleForFree": true,
+      "downloadUrl": "https://github.com/valentilabs/veloura/releases/latest/download/Veloura-Beta.dmg",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "author": { "@type": "Organization", "name": "Valenti Labs" },
+      "publisher": { "@type": "Organization", "name": "Valenti Labs", "sameAs": ["https://www.instagram.com/veloura.interface/"] },
+      "featureList": "Prompt to beat in FL Studio; chords, melodies, 808s and drums; editable MIDI in the Piano Roll and steps in the Channel Rack; uses your own drum kits; Continue with ChatGPT; one-click undo"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "Is Veloura Beta free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Veloura Beta is a free download. Donations are optional. AI use counts toward your paid ChatGPT plan, runs on Gemini's free tier, or is billed per use by Anthropic." } },
+        { "@type": "Question", "name": "Is Veloura Beta the same as Veloura?", "acceptedAnswer": { "@type": "Answer", "text": "No. Veloura Beta is a free early version. The official Veloura is a separate paid app coming later." } },
+        { "@type": "Question", "name": "What do I need to run Veloura Beta?", "acceptedAnswer": { "@type": "Answer", "text": "A Mac with Apple silicon, FL Studio 24 or newer (FL Studio 2026 recommended), and a paid ChatGPT plan (Go, Plus or Pro), a Gemini API key or a Claude API key." } },
+        { "@type": "Question", "name": "Does it work with free ChatGPT?", "acceptedAnswer": { "@type": "Answer", "text": "No. OpenAI refuses free accounts, so ChatGPT sign-in needs Go, Plus or Pro. For a free option, use a Gemini API key on Google's free tier (not available in the EEA, UK or Switzerland) or the offline composer." } },
+        { "@type": "Question", "name": "Is Veloura Beta made by Image-Line?", "acceptedAnswer": { "@type": "Answer", "text": "No. Veloura Beta is an independent app that works with FL Studio. It is not affiliated with or endorsed by Image-Line." } }
+      ]
+    }
+  ]
+}
+</script>
+
+</head>
+<body>
+<div class="draft">Early preview. Thanks for trying Veloura Beta.</div>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Veloura Beta home"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="ic" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#262733"/><stop offset="1" stop-color="#17181F"/></linearGradient><linearGradient id="ib" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE3A8"/><stop offset="1" stop-color="#FFD17B"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#ic)"/><rect x=".5" y=".5" width="63" height="63" rx="14.5" fill="none" stroke="#FFD17B" stroke-opacity=".3"/><g fill="url(#ib)"><rect x="10.25" y="26.95" width="4.5" height="10.1" rx="2.25"/><rect x="16.75" y="22.15" width="4.5" height="19.7" rx="2.25"/><rect x="23.25" y="17.2" width="4.5" height="29.6" rx="2.25"/><rect x="29.75" y="19.1" width="4.5" height="25.8" rx="2.25"/><rect x="36.25" y="24.8" width="4.5" height="14.4" rx="2.25"/><rect x="42.75" y="20.8" width="4.5" height="22.4" rx="2.25"/><rect x="49.25" y="25.8" width="4.5" height="12.4" rx="2.25"/></g></svg>Veloura <span class="beta">Beta</span></a>
+    <div class="links">
+      <a class="txt" href="#ai">ChatGPT</a>
+      <a class="txt" href="#two">Beta vs Veloura</a>
+      <a class="txt" href="#details">Details</a>
+      <button class="btn btn-ghost support-nav" type="button" data-support aria-label="Support Veloura"><svg viewBox="0 0 24 24" aria-hidden="true" fill="#FF4D68"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21Z"/></svg><span>Support</span></button>
+      <a class="btn btn-primary" href="https://github.com/valentilabs/veloura/releases/latest/download/Veloura-Beta.dmg" data-download>Download</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="wrap">
+    <span class="beta">Free beta · v0.9</span>
+    <h1><span>Type it.</span><span><span class="grad">Hear it in FL.<svg class="ul" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="ulg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFE6B0"/><stop offset=".6" stop-color="#FFD17B"/><stop offset="1" stop-color="#E9B78F"/></linearGradient></defs><path d="M5.0 11.53 L9.8 10.87 L14.7 10.37 L19.5 9.93 L24.3 9.66 L29.2 9.59 L34.0 9.51 L38.8 9.40 L43.7 9.25 L48.5 9.08 L53.3 8.87 L58.2 8.65 L63.0 8.41 L67.8 8.18 L72.7 7.97 L77.5 7.78 L82.3 7.63 L87.2 7.53 L92.0 7.48 L96.8 7.48 L101.7 7.53 L106.5 7.61 L111.3 7.70 L116.2 7.81 L121.0 7.92 L125.8 8.00 L130.7 8.06 L135.5 8.09 L140.3 8.09 L145.2 8.06 L150.0 8.00 L154.8 7.94 L159.7 7.87 L164.5 7.80 L169.3 7.76 L174.2 7.74 L179.0 7.76 L183.8 7.82 L188.7 7.91 L193.5 8.04 L198.3 8.19 L203.2 8.38 L208.0 8.59 L212.8 8.81 L217.7 9.03 L222.5 9.26 L227.3 9.49 L232.2 9.71 L237.0 9.92 L241.8 10.12 L246.7 10.31 L251.5 10.48 L256.3 10.64 L261.2 10.79 L266.0 10.93 L270.8 11.07 L275.7 11.20 L280.5 11.35 L285.3 11.50 L290.2 11.69 L295.0 11.98 L295.0 12.22 L290.2 12.22 L285.3 12.18 L280.5 12.14 L275.7 12.12 L270.8 12.10 L266.0 12.08 L261.2 12.06 L256.3 12.01 L251.5 11.93 L246.7 11.83 L241.8 11.69 L237.0 11.52 L232.2 11.32 L227.3 11.10 L222.5 10.88 L217.7 10.66 L212.8 10.46 L208.0 10.29 L203.2 10.15 L198.3 10.05 L193.5 9.99 L188.7 9.97 L183.8 9.98 L179.0 10.02 L174.2 10.08 L169.3 10.14 L164.5 10.21 L159.7 10.27 L154.8 10.32 L150.0 10.36 L145.2 10.38 L140.3 10.39 L135.5 10.39 L130.7 10.38 L125.8 10.37 L121.0 10.36 L116.2 10.36 L111.3 10.36 L106.5 10.38 L101.7 10.41 L96.8 10.45 L92.0 10.50 L87.2 10.58 L82.3 10.67 L77.5 10.78 L72.7 10.91 L67.8 11.07 L63.0 11.26 L58.2 11.46 L53.3 11.69 L48.5 11.92 L43.7 12.17 L38.8 12.41 L34.0 12.64 L29.2 12.86 L24.3 13.04 L19.5 12.97 L14.7 12.69 L9.8 12.33 L5.0 11.80Z"/></svg></span></span></h1>
+    <p class="sub">Chords, melody, 808 and drums from one prompt, written straight into FL Studio.</p>
+    <div class="cta">
+      <div class="dl-wrap">
+      <a class="dl-btn" href="https://github.com/valentilabs/veloura/releases/latest/download/Veloura-Beta.dmg" data-download>
+        <span class="eq" aria-hidden="true"><i style="--h:12px;--d:0s"></i><i style="--h:22px;--d:.15s"></i><i style="--h:30px;--d:.3s"></i><i style="--h:26px;--d:.45s"></i><i style="--h:16px;--d:.6s"></i><i style="--h:24px;--d:.75s"></i><i style="--h:13px;--d:.9s"></i></span>
+        <span class="t"><b>Download Veloura Beta</b><small>Free · for Mac</small></span>
+      </a>
+        <span class="note" aria-hidden="true"><svg class="ink" viewBox="0 0 56 46"><path d="M52 6 C 34 4, 16 14, 9 38"/><path d="M4 30 L9 39 L17 32"/></svg>free while in beta</span>
+      </div>
+    </div>
+    <div class="reqs" aria-label="Requirements">
+      <span class="req"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M1.5 19.5h21"/></svg>macOS 13+ <em>· Apple silicon</em></span>
+      <span class="req"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v10M13 4v10M18 4v10M3 14h18"/></svg>FL Studio 24+ <em>· 2026 recommended</em></span>
+      <span class="req"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.3 5.6L20 9.3l-4.4 3.9 1.3 5.8L12 16l-4.9 3 1.3-5.8L4 9.3l5.7-.7z"/></svg>Runs on ChatGPT</span>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="wrap">
+      <div class="win glass" role="img" aria-label="Veloura Beta writing a plugg beat from a typed prompt: kick, snare, hats, 808, chords and a lead melody appear on the grid and play">
+        <div class="win-bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="ttl">Veloura Beta</span></div>
+        <div class="win-body">
+          <div class="ask"><span class="txt" id="ask">dark plugg beat, glassy lead, sliding 808</span><span class="state ok" id="state">Added to FL</span><span class="send" aria-hidden="true">↑</span></div>
+          <div class="meta-row"><span>Pattern 1 · <b id="genre">Plugg</b></span><span><b id="bpm">150</b> BPM · <b id="key">F# minor</b></span></div>
+          <div class="lanes" id="lanes">
+            <div class="lane" style="--c: var(--seaglass)"><span>Kick</span><div class="grid16" data-row="kick"></div></div>
+            <div class="lane" style="--c: var(--seaglass)"><span>Snare</span><div class="grid16" data-row="snare"></div></div>
+            <div class="lane" style="--c: var(--seaglass)"><span>Hats</span><div class="grid16" data-row="hat"></div></div>
+            <div class="lane" style="--c: var(--rose)"><span>808</span><div class="roll" data-roll="bass"></div></div>
+            <div class="lane" style="--c: var(--champagne)"><span>Chords</span><div class="roll tall" data-roll="chords"></div></div>
+            <div class="lane" style="--c: var(--sage)"><span>Lead</span><div class="roll" data-roll="lead"></div></div>
+            <div class="head" id="head"></div>
+          </div>
+          <div class="win-foot"><span>Real MIDI in your Piano Roll and Channel Rack</span><span class="chip show" id="chip">✓ 6 parts written</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section>
+  <div class="wrap">
+    <div class="statement">
+      <svg class="orn" viewBox="0 0 120 22" aria-hidden="true"><path d="M3 12 C 14 5, 23 18, 35 11 S 52 5, 57 11"/><path d="M63 11 C 69 18, 77 5, 88 12 S 107 17, 117 10"/><path d="M60 13 c -3 -5, 0 -9, 4 -9 c 1 4, -1 7, -4 9"/></svg>
+      <span class="kicker">Inside your project</span>
+      <h2>Not audio. <span class="grad">Real notes.</span></h2>
+    </div>
+    <div class="tiles">
+      <div class="tile glass">
+        <div class="viz"><div class="mini-roll"><b style="left:4%;top:18px;width:22%;--d:0s"></b><b style="left:30%;top:44px;width:12%;--d:.25s"></b><b style="left:46%;top:31px;width:16%;--d:.5s"></b><b style="left:66%;top:70px;width:10%;--d:.75s"></b><b style="left:78%;top:44px;width:18%;--d:1s"></b><b style="left:12%;top:96px;width:30%;--d:.4s"></b><b style="left:52%;top:96px;width:30%;--d:.9s"></b></div></div>
+        <div><h3>Every note editable.</h3><p>Piano Roll and Channel Rack, like you wrote it.</p></div>
+      </div>
+      <div class="tile glass">
+        <div class="viz"><div class="pads"><i style="--d:0s"></i><i style="--d:.3s;--c:var(--rose)"></i><i style="--d:.6s"></i><i style="--d:.9s;--c:var(--sage)"></i><i style="--d:1.2s;--c:var(--rose)"></i><i style="--d:.15s"></i><i style="--d:1.5s;--c:var(--champagne)"></i><i style="--d:.45s;--c:var(--lavender)"></i><i style="--d:1.8s"></i><i style="--d:.75s;--c:var(--sage)"></i><i style="--d:2.1s;--c:var(--rose)"></i><i style="--d:1.05s;--c:var(--champagne)"></i></div></div>
+        <div><h3>Your kits.</h3><p>It plays the sounds you already own.</p></div>
+      </div>
+      <div class="tile glass">
+        <div class="viz"><div class="undo"><div class="notes"><b style="left:6%;top:24px;width:24%"></b><b style="left:34%;top:52px;width:18%"></b><b style="left:56%;top:36px;width:22%"></b><b style="left:20%;top:86px;width:30%"></b><b style="left:62%;top:90px;width:26%"></b></div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div></div>
+        <div><h3>Undo anything.</h3><p>One click puts your project back.</p></div>
+      </div>
+    </div>
+    <div class="marquee" aria-label="Genres: trap, plugg, rage, drill, jerk, melodic trap, cloud rap, boom bap, R&amp;B, Detroit, pop">
+      <div class="track" aria-hidden="true">
+        <span>Trap</span><span>Plugg</span><span>Rage</span><span>Drill</span><span>Jerk</span><span>Melodic trap</span><span>Cloud rap</span><span>Boom bap</span><span>R&amp;B</span><span>Detroit</span><span>Pop</span><span>Trap</span><span>Plugg</span><span>Rage</span><span>Drill</span><span>Jerk</span><span>Melodic trap</span><span>Cloud rap</span><span>Boom bap</span><span>R&amp;B</span><span>Detroit</span><span>Pop</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ai">
+  <div class="wrap">
+    <div class="statement">
+      <svg class="orn" viewBox="0 0 120 22" aria-hidden="true"><path d="M3 12 C 14 5, 23 18, 35 11 S 52 5, 57 11"/><path d="M63 11 C 69 18, 77 5, 88 12 S 107 17, 117 10"/><path d="M60 13 c -3 -5, 0 -9, 4 -9 c 1 4, -1 7, -4 9"/></svg>
+      <span class="kicker">Bring your own AI</span>
+      <h2>Best with <span class="grad">ChatGPT.</span></h2>
+    </div>
+    <div class="gpt">
+      <div class="gpt-card glass">
+        <div class="row1"><span class="mark"><img src="data:image/png;base64,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" alt="ChatGPT logo"></span><div><span class="rec">Recommended</span><h3>Continue with ChatGPT</h3></div></div>
+        <p class="need">Needs a <em>paid</em> ChatGPT plan.</p>
+        <p class="small">Sign in once. Each beat uses a little of your plan's limits. Free ChatGPT accounts are refused by OpenAI.</p>
+      </div>
+      <div class="ladder glass" aria-label="Paid ChatGPT plans ranked worst to best for Veloura: Go, Plus, Business or Enterprise or Edu, Pro">
+        <div class="lh"><b>Plans that work, worst to best</b><span>More plan, more beats before limits</span></div>
+        <div class="bars">
+          <div class="bar"><div class="col" style="--h:28%;--c1:#C79A6E;--c2:#8E5F3E;--d:0s"></div><div class="nm">Go<span>Cheapest</span></div></div>
+          <div class="bar"><div class="col" style="--h:52%;--c1:#E2C089;--c2:#A8803F;--d:.2s"><small>Tested</small></div><div class="nm">Plus<span>$20/mo</span></div></div>
+          <div class="bar"><div class="col" style="--h:74%;--c1:#FFD99A;--c2:#C9963F;--d:.4s"></div><div class="nm">Business<span>Enterprise, Edu</span></div></div>
+          <div class="bar"><div class="col" style="--h:100%;--c1:#FFF1D2;--c2:#FFD17B;--d:.6s"><small>Best</small></div><div class="nm">Pro<span>Highest limits</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="others">
+      <div class="other glass"><img src="data:image/png;base64,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" alt="Gemini logo"><div><b>Gemini API key</b><span>Free tier · not in EEA, UK, CH</span></div></div>
+      <div class="other glass"><img src="data:image/png;base64,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" alt="Claude logo"><div><b>Claude API key</b><span>Pay per beat · from $0.004</span></div></div>
+      <div class="other glass"><span class="off"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><div><b>Offline composer</b><span>Free · no account</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="two">
+  <div class="wrap">
+    <div class="statement">
+      <svg class="orn" viewBox="0 0 120 22" aria-hidden="true"><path d="M3 12 C 14 5, 23 18, 35 11 S 52 5, 57 11"/><path d="M63 11 C 69 18, 77 5, 88 12 S 107 17, 117 10"/><path d="M60 13 c -3 -5, 0 -9, 4 -9 c 1 4, -1 7, -4 9"/></svg>
+      <span class="kicker">Two different apps</span>
+      <h2>This is the beta. <span class="grad">Veloura is coming.</span></h2>
+    </div>
+    <div class="two">
+      <div class="app now glass">
+        <span class="st">Available now</span>
+        <h3>Veloura <span class="beta">Beta</span></h3>
+        <p class="big">Free. Early. Yours to break.</p>
+        <ul><li>Free download</li><li>Your own AI</li><li>Open source</li><li>Expect bugs</li></ul>
+        <div><a class="btn btn-primary" href="https://github.com/valentilabs/veloura/releases/latest/download/Veloura-Beta.dmg" data-download>Download the beta</a></div>
+      </div>
+      <div class="app next">
+        <span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1"><rect x="4" y="10.5" width="16" height="10.5" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span>
+        <span class="st">Coming later</span>
+        <h3>Veloura</h3>
+        <p class="big">The official app. Built from the beta.</p>
+        <ul><li>Paid</li><li>Separate app</li><li>Beta users hear first</li></ul>
+      </div>
+    </div>
+    <p class="vs-note">Veloura Beta is a free preview. The official Veloura is a separate paid app, with price and date still to come.</p>
+  </div>
+</section>
+
+<section id="support">
+  <div class="wrap">
+    <div class="support">
+      <svg class="sprig ink" viewBox="0 0 140 120" aria-hidden="true"><path d="M8 116 C 40 92, 72 60, 124 8"/><path d="M40 92 c -12 -4, -16 -16, -12 -23 c 10 3, 14 13, 12 23"/><path d="M62 70 c 2 -12, 12 -18, 21 -16 c -2 10, -11 16, -21 16"/><path d="M84 47 c -10 -6, -12 -16, -8 -23 c 8 4, 10 14, 8 23"/><path d="M102 30 c 4 -10, 14 -12, 20 -8 c -4 8, -12 10, -20 8"/></svg>
+      <div class="copy">
+        <span class="kicker" style="color:var(--rose)">Made by one producer</span>
+        <h2>Keep Veloura going.</h2>
+        <p>The beta is free. If it saves you a session, a few dollars keeps the updates coming.</p>
+        <button class="btn btn-heart" type="button" data-support><svg viewBox="0 0 24 24" fill="#FFF5F3" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21Z"/></svg>Support Veloura</button>
+      </div>
+      <div class="heartviz" aria-hidden="true">
+        <svg viewBox="0 0 260 230"><defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6B7F"/><stop offset=".5" stop-color="#E8173F"/><stop offset="1" stop-color="#9E0B2B"/></linearGradient></defs><path class="h" d="M130 214s-104-62-122-124C-6 40 26 8 64 8c28 0 47 15 66 39 19-24 38-39 66-39 38 0 70 32 56 82-18 62-122 124-122 124Z"/><path class="wave" d="M20 118h62l14-30 18 62 18-80 16 70 12-22h80"/></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="final">
+      <h2>Make the next one <span class="grad">faster.</span></h2>
+      <a class="dl-btn" href="https://github.com/valentilabs/veloura/releases/latest/download/Veloura-Beta.dmg" data-download>
+        <span class="eq" aria-hidden="true"><i style="--h:12px;--d:0s"></i><i style="--h:22px;--d:.15s"></i><i style="--h:30px;--d:.3s"></i><i style="--h:26px;--d:.45s"></i><i style="--h:16px;--d:.6s"></i><i style="--h:24px;--d:.75s"></i><i style="--h:13px;--d:.9s"></i></span>
+        <span class="t"><b>Download Veloura Beta</b><small>Free · macOS · Apple silicon · v0.9</small></span>
+      </a>
+      <p class="small">Needs FL Studio 24 or newer. <a href="#details">Requirements and setup</a></p>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="details" id="details">
+  <div class="wrap">
+    <h2>The <em>details</em></h2>
+    <p class="lead">Everything else, for the curious.</p>
+    <div class="cols">
+      <div>
+        <h3>Requirements</h3>
+        <dl>
+          <dt>Mac</dt><dd>Apple silicon (M1 or newer), macOS 13 Ventura or later</dd>
+          <dt>DAW</dt><dd>FL Studio 24 or newer. FL Studio 2026 recommended.</dd>
+          <dt>AI</dt><dd>A paid ChatGPT plan (Go, Plus or Pro), a Gemini API key (free tier available) or a Claude API key. The offline composer needs nothing.</dd>
+          <dt>Price</dt><dd>Free. Donations optional.</dd>
+        </dl>
+      </div>
+      <div>
+        <h3>Install</h3>
+        <ol>
+          <li>Open the downloaded file and drag Veloura into Applications.</li>
+          <li>Open Veloura. It walks you through the MIDI ports and the one FL script it needs.</li>
+          <li>Continue with ChatGPT, or add a Gemini or Claude key.</li>
+        </ol>
+      </div>
+      <div>
+        <h3>If it won't connect to FL</h3>
+        <ol>
+          <li>Quit FL Studio and Veloura.</li>
+          <li>Open Veloura first, then FL Studio.</li>
+          <li>Open your project and go straight to the Piano Roll.</li>
+          <li>Link the bridge: Tools › Scripts › veloura_bridge.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="sec-head"><span class="label">FAQ</span><h2>Questions</h2></div>
+    <div class="faq">
+      <details><summary>Is Veloura Beta really free?</summary><p>Yes. The download is free and donations are optional. AI use counts toward your paid ChatGPT plan, runs on Gemini's free tier, or costs from about $0.004 a beat with a Claude key.</p></details>
+      <details><summary>Is the beta the real Veloura?</summary><p>No. Veloura Beta is a free early version. The official Veloura is a separate paid app that comes later, and beta users hear about it first inside the app. There's no price or date yet.</p></details>
+      <details><summary>Does it work with free ChatGPT?</summary><p>No. OpenAI refuses free accounts, so ChatGPT sign-in needs Go, Plus or Pro. For a free option, use a Gemini API key on Google's free tier (not available in the EEA, UK or Switzerland), or the offline composer.</p></details>
+      <details><summary>Which ChatGPT plan should I get?</summary><p>Any paid plan works. Ranked worst to best for Veloura: Go (cheapest, lowest limits), Plus ($20 a month, the one we test on), Business, Enterprise or Edu (not tested yet), and Pro (highest limits). Bigger plans let you make more beats before hitting limits.</p></details>
+      <details><summary>Does it make audio or MIDI?</summary><p>MIDI. Veloura writes notes into the Piano Roll and steps into the Channel Rack, played by sounds and kits you already have.</p></details>
+      <details><summary>Can I release what I make?</summary><p>Veloura claims no ownership of what you make. Clearing any samples you use is up to you, and your AI provider's terms also apply.</p></details>
+      <details><summary>Windows or Intel Macs?</summary><p>Not yet. The beta runs on Macs with Apple silicon.</p></details>
+      <details><summary>Is Veloura Beta made by Image-Line?</summary><p>No. Veloura Beta is an independent app that works with FL Studio through FL's scripting features. It isn't affiliated with or endorsed by Image-Line.</p></details>
+      <details><summary>Where do donations go?</summary><p>Straight to the solo developer behind Veloura, through a third-party payment page. Donations are optional, don't unlock anything, and keep the free beta updated.</p></details>
+    </div>
+
+<section id="feedback">
+  <div class="wrap fb">
+    <div class="sec-head">
+      <span class="label">Feedback</span>
+      <h2>Tell us what's off</h2>
+      <p>Bugs, prompts that missed, features you want in the official Veloura. Every message gets read. Leave an email only if you want a reply.</p>
+    </div>
+    <form class="glass" id="fb-form" action="https://formspree.io/f/xgaobplj" method="POST" novalidate>
+      <label for="fb-message">Message</label>
+      <textarea id="fb-message" name="message" required placeholder="The 808 came out in the wrong key when I asked for..."></textarea>
+      <label for="fb-type">About</label>
+      <select id="fb-type" name="type">
+        <option>Bug</option>
+        <option>Beat quality</option>
+        <option>Feature idea</option>
+        <option>Setup or install</option>
+        <option>Something else</option>
+      </select>
+      <label for="fb-email">Email <span>(optional, for a reply)</span></label>
+      <input id="fb-email" name="email" type="email" autocomplete="email" placeholder="you@studio.com">
+      <input class="hp" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div><button class="btn btn-primary" type="submit" id="fb-send">Send feedback</button></div>
+      <p class="msg" id="fb-msg" role="status"></p>
+    </form>
+  </div>
+</section>
+
+<section id="legal">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="label">Legal</span>
+      <h2>License and privacy</h2>
+    </div>
+    <div class="legal">
+      <details id="license"><summary>Veloura Beta License</summary><div class="doc">
+        <p>Last updated: October 21, 2026. Veloura Beta is made by Valenti Labs. By downloading or using it, you agree to these terms.</p>
+        <h4>1. Free beta software</h4>
+        <p>Veloura Beta is free to download and use. It is beta software, provided as is. It may have bugs, change without notice, or stop working. Back up your projects. Its source code is published by Valenti Labs under the MIT License, which also applies to the code.</p>
+        <h4>2. Who can use it</h4>
+        <p>You must be 18 or older.</p>
+        <h4>3. Your AI account and costs</h4>
+        <p>Veloura Beta connects to an AI account you choose (ChatGPT, Claude or Gemini). You pay that provider directly and follow its terms. Valenti Labs isn't responsible for your AI charges or plan limits.</p>
+        <h4>4. FL Studio</h4>
+        <p>Veloura Beta controls parts of FL Studio while it works. Save your projects first. FL Studio is a trademark of Image-Line Software. Veloura Beta is not affiliated with or endorsed by Image-Line.</p>
+        <h4>5. What you make</h4>
+        <p>Valenti Labs claims no ownership of music, MIDI or patterns you create. You're responsible for the rights to samples and sounds you use. AI output can be imperfect and may resemble existing music, so check what you release.</p>
+        <h4>6. No warranty, limited liability</h4>
+        <p>VELOURA BETA IS PROVIDED "AS IS", WITHOUT WARRANTIES OF ANY KIND. TO THE EXTENT THE LAW ALLOWS, VALENTI LABS IS NOT LIABLE FOR LOST PROJECTS, DATA, PROFITS, AI CHARGES, OR ANY INDIRECT OR CONSEQUENTIAL DAMAGES.</p>
+        <h4>7. Tips</h4>
+        <p>Donations through Gumroad are voluntary, non-refundable except as Gumroad's policies require, and don't buy any extra features, support or future products.</p>
+        <h4>8. Contact</h4>
+        <p>Use the <a href="#feedback">feedback form</a>.</p>
+      </div></details>
+      <details id="privacy"><summary>Privacy Policy</summary><div class="doc">
+        <p>Last updated: October 21, 2026.</p>
+        <ul>
+          <li><strong>The app:</strong> your prompts and the project details Veloura needs (tempo, key, channel names, parts it wrote) go straight from your Mac to the AI provider you pick. Valenti Labs doesn't receive them.</li>
+          <li><strong>Sign-ins and keys:</strong> stored in your Mac's Keychain. Never sent to Valenti Labs.</li>
+          <li><strong>Updates:</strong> the app checks GitHub for new versions, which shares your IP address with GitHub.</li>
+          <li><strong>Downloads:</strong> the app file is served from GitHub, which sees your IP address like any download host.</li>
+          <li><strong>Donations:</strong> handled by Gumroad under its own privacy policy. Valenti Labs never sees your card details.</li>
+          <li><strong>This website:</strong> no accounts or tracking cookies. The only form is the feedback form.</li>
+          <li><strong>Feedback form:</strong> sent through Formspree, which stores what you type. The email field is optional and used only to reply to you.</li>
+        </ul>
+        <p>Questions: use the <a href="#feedback">feedback form</a>.</p>
+      </div></details>
+    </div>
+  </div>
+</section>
+
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="r">
+      <span><span class="sig">Veloura</span> by Valenti Labs · © 2026 · Veloura Beta 0.9</span>
+      <span style="display:flex;gap:16px;flex-wrap:wrap;align-items:center"><a class="ig" href="https://www.instagram.com/veloura.interface/" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6"/></svg>@veloura.interface</a><a href="#license">License</a><a href="#privacy">Privacy</a><a href="#feedback">Feedback</a></span>
+    </div>
+    <p class="tm">Veloura Beta is an independent app and is not affiliated with, endorsed by or sponsored by Image-Line, Apple, OpenAI, Anthropic or Google. FL Studio is a trademark of Image-Line Software. Mac and macOS are trademarks of Apple Inc. ChatGPT, Claude and Gemini are trademarks of their owners.</p>
+  </div>
+</footer>
+
+<div class="scrim" id="scrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <button class="x" type="button" data-close aria-label="Close">✕</button>
+    <div class="top" id="m-dl">
+      <span class="ok">✓ Download started</span>
+      <h3 id="m-title">Almost <em>there.</em></h3>
+      <ol>
+        <li><span>Open the file and <b>drag Veloura into Applications</b>.</span></li>
+        <li><span><b>Open Veloura</b>, then FL Studio.</span></li>
+        <li><span><b>Continue with ChatGPT</b> and type your first beat.</span></li>
+      </ol>
+      <p class="retry">Didn't start? <a href="https://github.com/valentilabs/veloura/releases/latest/download/Veloura-Beta.dmg" id="m-retry">Download again</a></p>
+    </div>
+    <div class="give">
+      <h4><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21Z"/></svg><span id="m-give-title">Support Veloura</span></h4>
+      <p>Veloura Beta is free and made by one producer. Any amount helps keep it updated and gets the official Veloura here sooner.</p>
+      <a class="btn btn-heart" href="https://valentilabs.gumroad.com/l/SupportVeloura" target="_blank" rel="noopener" id="m-donate">Donate any amount</a>
+      <button class="later" type="button" data-close>Maybe later</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- live Veloura window ---------- */
+  // Drums: 16-step strings. Rolls: [start, length, row] on a 16-step bar, rows count down from the top.
+  var BEATS = [
+    { ask: 'dark plugg beat, glassy lead, sliding 808', genre: 'Plugg', bpm: 150, key: 'F# minor',
+      kick: '1000000010100000', snare: '0000100000001000', hat: '1010101010111111', soft: '0000000000011111',
+      bass: [[0,3,3],[3,3,3],[6,2,1],[8,4,4],[12,2,2],[14,2,5]],
+      chords: [[0,8,2],[0,8,4],[0,8,6],[8,8,1],[8,8,3],[8,8,5]],
+      lead: [[0,1,2],[2,1,1],[4,2,3],[7,1,2],[8,2,4],[11,1,3],[12,3,2]] },
+    { ask: 'detroit beat, bouncy 808, eerie piano, 100 bpm', genre: 'Detroit', bpm: 100, key: 'C minor',
+      kick: '1001001000100100', snare: '0000100000001001', hat: '1111111111111111', soft: '0101010101010101',
+      bass: [[0,2,4],[3,1,4],[6,2,2],[10,2,5],[12,3,3]],
+      chords: [[0,4,1],[0,4,4],[4,4,2],[4,4,5],[8,8,0],[8,8,3],[8,8,6]],
+      lead: [[1,1,1],[3,1,2],[5,1,1],[6,2,3],[9,1,1],[11,1,2],[13,2,4]] },
+    { ask: 'rage beat, distorted synth stabs, 160 bpm', genre: 'Rage', bpm: 160, key: 'D minor',
+      kick: '1000001000100010', snare: '0000100000001000', hat: '1010101011101010', soft: '0000000001000000',
+      bass: [[0,4,4],[6,2,4],[8,2,2],[10,4,5],[14,2,3]],
+      chords: [[0,2,2],[0,2,4],[3,2,2],[3,2,4],[6,2,1],[6,2,3],[8,2,2],[8,2,5],[11,2,1],[11,2,4],[14,2,2],[14,2,4]],
+      lead: [[0,2,1],[2,2,1],[4,1,3],[5,1,2],[8,2,0],[10,2,1],[12,4,2]] }
+  ];
+  var grids = {}, rolls = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.grid16'), function (g) {
+    for (var i = 0; i < 16; i++) g.appendChild(document.createElement('i'));
+    grids[g.dataset.row] = g;
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.roll'), function (r) { rolls[r.dataset.roll] = r; });
+  var ROWS = { bass: 6, chords: 8, lead: 6 };
+
+  function render(b, hidden) {
+    ['kick', 'snare', 'hat'].forEach(function (k) {
+      var cells = grids[k].children, p = b[k], s = k === 'hat' ? b.soft : '';
+      for (var i = 0; i < 16; i++) {
+        cells[i].className = (!hidden && p[i] === '1') ? 'on' + (s[i] === '1' ? ' soft' : '') : '';
+        cells[i].dataset.on = p[i];
+        cells[i].dataset.soft = s ? s[i] : '0';
+      }
+    });
+    ['bass', 'chords', 'lead'].forEach(function (k) {
+      var r = rolls[k]; r.innerHTML = '';
+      var h = 100 / ROWS[k];
+      b[k].forEach(function (n) {
+        var e = document.createElement('b');
+        e.style.left = (n[0] / 16 * 100) + '%';
+        e.style.width = 'calc(' + (n[1] / 16 * 100) + '% - 2px)';
+        e.style.top = 'calc(' + (n[2] * h) + '% + 1px)';
+        e.dataset.s = n[0]; e.dataset.e = n[0] + n[1];
+        if (hidden) e.className = 'hide';
+        r.appendChild(e);
+      });
+    });
+    document.getElementById('genre').textContent = b.genre;
+    document.getElementById('bpm').textContent = b.bpm;
+    document.getElementById('key').textContent = b.key;
+  }
+  render(BEATS[0], false);
+
+  var ask = document.getElementById('ask'), state = document.getElementById('state'), chip = document.getElementById('chip'), head = document.getElementById('head'), lanesEl = document.getElementById('lanes');
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function setState(t, cls) { state.textContent = t; state.className = 'state' + (cls ? ' ' + cls : ''); }
+
+  async function typeIn(text) {
+    ask.textContent = '';
+    for (var i = 1; i <= text.length; i++) { ask.textContent = text.slice(0, i); await wait(28 + Math.random() * 30); }
+  }
+  async function build(b) {
+    render(b, true);
+    setState('Writing', 'go');
+    var drumOrder = ['kick', 'snare', 'hat'];
+    for (var d = 0; d < 3; d++) {
+      var k = drumOrder[d], cells = grids[k].children;
+      for (var i = 0; i < 16; i++) if (cells[i].dataset.on === '1') { cells[i].className = 'on' + (cells[i].dataset.soft === '1' ? ' soft' : ''); await wait(22); }
+    }
+    var rk = ['bass', 'chords', 'lead'];
+    for (var j = 0; j < 3; j++) {
+      var notes = rolls[rk[j]].children;
+      for (var n = 0; n < notes.length; n++) { notes[n].classList.remove('hide'); await wait(45); }
+    }
+    setState('Added to FL', 'ok');
+    chip.classList.add('show');
+  }
+  function laneLeft() { var l = lanesEl.querySelector('.grid16'); return l.offsetLeft; }
+  async function play(b, bars) {
+    var stepMs = 60000 / b.bpm / 4, w = lanesEl.querySelector('.grid16').offsetWidth, x0 = laneLeft();
+    head.classList.add('on');
+    for (var s = 0; s < 16 * bars; s++) {
+      var st = s % 16;
+      head.style.left = (x0 + (st + .5) / 16 * w) + 'px';
+      ['kick', 'snare', 'hat'].forEach(function (k) {
+        var c = grids[k].children;
+        for (var i = 0; i < 16; i++) c[i].classList.toggle('hit', i === st && c[i].classList.contains('on'));
+      });
+      ['bass', 'chords', 'lead'].forEach(function (k) {
+        Array.prototype.forEach.call(rolls[k].children, function (e) { e.classList.toggle('hit', st >= +e.dataset.s && st < +e.dataset.e); });
+      });
+      await wait(stepMs);
+    }
+    head.classList.remove('on');
+  }
+  async function loop() {
+    var idx = 0;
+    await wait(1200);
+    await play(BEATS[0], 2);
+    while (true) {
+      idx = (idx + 1) % BEATS.length;
+      var b = BEATS[idx];
+      chip.classList.remove('show');
+      render(b, true);
+      setState('');
+      await typeIn(b.ask);
+      await wait(350);
+      await build(b);
+      await wait(300);
+      await play(b, 3);
+      await wait(600);
+    }
+  }
+  if (!reduce) loop();
+
+  /* ---------- download + support window ---------- */
+  var scrim = document.getElementById('scrim'), dlPart = document.getElementById('m-dl');
+  var lastFocus = null;
+  function openModal(mode) {
+    lastFocus = document.activeElement;
+    dlPart.hidden = mode !== 'download';
+    document.getElementById('m-give-title').textContent = mode === 'download' ? 'Enjoying it? Support Veloura' : 'Support Veloura';
+    scrim.hidden = false;
+    requestAnimationFrame(function () { scrim.classList.add('open'); });
+    var focusEl = mode === 'download' ? scrim.querySelector('.x') : document.getElementById('m-donate');
+    setTimeout(function () { focusEl.focus(); }, 50);
+  }
+  function closeModal() {
+    scrim.classList.remove('open');
+    setTimeout(function () { scrim.hidden = true; if (lastFocus) lastFocus.focus(); }, 250);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-download]'), function (a) {
+    // The link itself starts the download; the window opens alongside it.
+    a.addEventListener('click', function () { setTimeout(function () { openModal('download'); }, 150); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-support]'), function (b) {
+    b.addEventListener('click', function () { openModal('support'); });
+  });
+  Array.prototype.forEach.call(scrim.querySelectorAll('[data-close]'), function (b) { b.addEventListener('click', closeModal); });
+  scrim.addEventListener('click', function (e) { if (e.target === scrim) closeModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !scrim.hidden) closeModal(); });
+
+  /* ---------- gentle section entrances ---------- */
+  if (!reduce && 'IntersectionObserver' in window) {
+    var risers = document.querySelectorAll('.tiles, .gpt, .others, .two, .support, .final');
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.remove('pre'); io.unobserve(e.target); } }); }, { threshold: .12 });
+    Array.prototype.forEach.call(risers, function (el) {
+      el.classList.add('rise');
+      if (el.getBoundingClientRect().top > innerHeight) { el.classList.add('pre'); io.observe(el); }
+    });
+  }
+
+  /* ---------- feedback form ---------- */
+  var form = document.getElementById('fb-form'), fbMsg = document.getElementById('fb-msg'), send = document.getElementById('fb-send');
+  if (form) form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var text = document.getElementById('fb-message').value.trim();
+    var email = document.getElementById('fb-email').value.trim();
+    fbMsg.className = 'msg';
+    if (!text) { fbMsg.className = 'msg err'; fbMsg.textContent = 'Write a message first.'; return; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fbMsg.className = 'msg err'; fbMsg.textContent = 'Check the email address, or leave it empty.'; return; }
+    send.disabled = true; fbMsg.textContent = 'Sending...';
+    fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); form.reset(); fbMsg.className = 'msg ok'; fbMsg.textContent = 'Sent. Thanks for helping shape Veloura.'; })
+      .catch(function () { fbMsg.className = 'msg err'; fbMsg.textContent = "Couldn't send right now. Check your connection and try again."; })
+      .then(function () { send.disabled = false; });
+  });
+
+  /* ---------- open a details section when its link is followed ---------- */
+  function openHash() {
+    var id = location.hash.slice(1), el = id && document.getElementById(id);
+    if (el && el.tagName === 'DETAILS') { el.open = true; el.scrollIntoView(); }
+  }
+  window.addEventListener('hashchange', openHash); openHash();
+})();
+</script>
+
+</body>
+</html>
