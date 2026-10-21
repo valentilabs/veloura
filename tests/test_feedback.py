@@ -6,7 +6,7 @@ import unittest
 import urllib.error
 from unittest import mock
 
-from veloura import feedback
+from veloura import edition, feedback
 
 
 class FakeResp:
@@ -36,7 +36,7 @@ class FeedbackTests(unittest.TestCase):
         self.assertEqual(set(body), {"message", "_replyto", "app_version", "macos_version"})
         self.assertEqual(body["message"], "Love it")
         self.assertEqual(body["_replyto"], "me@example.com")
-        self.assertIn("0.9.0", body["app_version"])
+        self.assertIn(edition.VERSION, body["app_version"])
         self.assertNotIn(os.path.expanduser("~"), json.dumps(body))
 
     def test_email_is_optional(self):

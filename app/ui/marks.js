@@ -25,7 +25,7 @@ function illustration(name, size) {
   return svg;
 }
 
-// "Not connected" scene: a cable and plug that keep reaching for FL's socket, a little spark in the gap, then pull back.
+// "Not connected" scene: a minimal cable and plug that keep reaching for the socket, a little spark in the gap, then pull back.
 function unpluggedScene(size) {
   const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg");
   svg.setAttribute("viewBox", "0 0 160 80"); svg.setAttribute("width", size || 150); svg.setAttribute("height", (size || 150) / 2);
@@ -35,7 +35,6 @@ function unpluggedScene(size) {
   const socket = el("g", { class: "up-socket" });
   el("rect", { x: 112, y: 22, width: 34, height: 36, rx: 9 }, socket);
   el("path", { d: "M124 34v12M134 34v12" }, socket);
-  el("text", { x: 129, y: 72, "text-anchor": "middle", class: "up-label" }, socket).textContent = "FL";
   // the plug and its cable, which slide together
   const plug = el("g", { class: "up-plug" });
   el("path", { d: "M6 52c14 0 20-12 34-12h22", class: "up-cable" }, plug);

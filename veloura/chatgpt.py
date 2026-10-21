@@ -44,7 +44,7 @@ KEYCHAIN_SERVICE = "Veloura ChatGPT sign-in"
 KEYCHAIN_ACCOUNT = "veloura"
 USAGE_URL = "https://chatgpt.com/settings/usage"
 REASONING_EFFORT = None   # None: the model's default. "low" | "medium" | "high" are accepted on the plan route (2026-10-20)
-USER_AGENT = "VelouraBeta/0.9.0 (Macintosh; macOS)"   # Cloudflare in front of OpenAI can refuse Python's default agent
+USER_AGENT = "VelouraBeta/0.9.1 (Macintosh; macOS)"   # Cloudflare in front of OpenAI can refuse Python's default agent
 
 
 class ChatGPTError(RuntimeError):

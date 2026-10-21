@@ -22,13 +22,14 @@ const PYTHON = process.env.VELOURA_PYTHON || (app.isPackaged ? path.join(RESOURC
 // attempt log into Application Support the first time (the originals stay where they were). The FL command history in
 // logs/archive and logs/sent is left behind: it is only for debugging and is hundreds of small files.
 // Veloura was called Cadence until 2026-10-21. On the first launch after the rename, copy the old data folder
-// (~/Library/Application Support/Cadence: settings, projects, library, logs, dev_mode, intro state) into Veloura's.
+// (~/Library/Application Support/Cadence: settings, projects, library, logs, dev_mode) into Veloura's. The intro state
+// is not copied: a fresh Veloura install always opens with the intro.
 // It's a copy, so the old folder stays as a fallback.
 function migrateFromCadence() {
   if (!app.isPackaged || fs.existsSync(path.join(HOME, "data"))) return;
   const old = path.join(app.getPath("appData"), "Cadence");
   if (!fs.existsSync(path.join(old, "data"))) return;
-  for (const name of ["data", "logs", "dev_mode", "launch_state.json"]) {
+  for (const name of ["data", "logs", "dev_mode"]) {
     const from = path.join(old, name);
     if (!fs.existsSync(from)) continue;
     try {
@@ -135,8 +136,9 @@ async function createWindow() {
     if (url.startsWith("https://")) shell.openExternal(url);
     return { action: "deny" };
   });
-  // Opening animation only after a Mac restart, a Veloura update, or 8+ hours away (see intro-policy.js).
-  intro = require("./intro-policy").start(path.join(app.getPath("userData"), "launch_state.json"), app.getVersion());
+  // Opening animation after an install or update, a Mac restart, or 4+ hours away (see intro-policy.js).
+  const policy = require("./intro-policy");
+  intro = policy.start(path.join(app.getPath("userData"), "launch_state.json"), app.getVersion(), policy.buildStamp(process.execPath));
   await win.loadURL(`${origin}/#token=${svc.token}${intro.play ? "&intro=1" : ""}`);
   // Beta update notice (update-check.js): a few seconds after opening, so it never slows startup.
   if (app.isPackaged) setTimeout(() => require("./update-check").check({

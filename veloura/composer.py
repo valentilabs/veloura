@@ -354,7 +354,7 @@ def respond(text, settings, existing_parts, seed=None):
         groove_note = (" Drums: %s groove." % info["groove"]["label"]) if info.get("groove") else ""
         chords = " ".join(c["symbol"] for c in info["harmony"][:4])
         reply = ("Offline draft (%s, chords %s): %s.%s Built by Veloura's theory and groove engines, not an AI model; connect "
-                 "Claude or Gemini in Settings for full production judgment." % (tempo_note, chords, ", ".join(p["name"] for p in finished), groove_note))
+                 "ChatGPT (recommended) in Settings for full production judgment." % (tempo_note, chords, ", ".join(p["name"] for p in finished), groove_note))
     elif guide_list:
         reply = "This one needs a manual step in FL Studio. Guided steps below."
     else:

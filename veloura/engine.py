@@ -37,8 +37,9 @@ DEFAULT_SETTINGS = {
     "onboarded": False, "auto_tempo": True, "tempo_auto": False, "key_auto": True, "bars_auto": True,
     "remind_loop": True, "remind_cut": True, "careful": False,
     "feel": {}, "locked_parts": [], "quality": "fast", "use_my_style": False, "auto_mixer": True, "auto_sounds": True, "guide_arrow": True, "listen_after": True,
-    "kit_auto_load": False,
+    "kit_auto_load": False, "theme": "champagne", "rack_open": True,
 }
+THEMES = ("champagne", "rose-gold", "platinum", "lilac", "amber-noir")
 REF_DIR = os.path.join(DATA_DIR, "references")
 AUDIO_EXT = (".wav", ".mp3", ".m4a", ".aif", ".aiff", ".flac", ".caf", ".aac", ".mp4")
 
@@ -804,10 +805,28 @@ class Engine:
                     with open(os.path.join(d, fn), encoding="utf-8") as f:
                         data = json.load(f)
                     out.append({"name": fn[:-5], "messages": len(data.get("messages") or []), "parts": len(data.get("parts") or {}),
-                                "updated": time.strftime("%Y-%m-%d %H:%M", time.localtime(os.path.getmtime(os.path.join(d, fn))))})
+                                "updated": time.strftime("%Y-%m-%d %H:%M", time.localtime(os.path.getmtime(os.path.join(d, fn)))),
+                                **self._project_summary(data)})
                 except (OSError, ValueError):
                     continue
         return {"current": self.project, "projects": out, "has_starter": os.path.isfile(self._starter_path())}
+
+    @staticmethod
+    def _project_summary(data):
+        """Genre, tempo, key and a small note preview of a project's latest beat, for Studio's recent beats."""
+        out = {"genre": None, "tempo": None, "key": None, "preview": [], "preview_role": None}
+        props = [p for p in (data.get("proposals") or {}).values() if isinstance(p, dict) and p.get("parts")]
+        if not props:
+            return out
+        last = props[-1]
+        info = last.get("info") or {}
+        out.update(genre=last.get("genre"), tempo=info.get("tempo"), key=info.get("key"))
+        parts = [p for p in last["parts"] if isinstance(p, dict) and (p.get("plan") or {}).get("notes")]
+        part = next((p for p in parts if p.get("role") not in ("drums", "bass")), parts[0] if parts else None)
+        if part:
+            out["preview_role"] = part.get("role")
+            out["preview"] = [[n.get("start", 0), n.get("length", .25), n.get("pitch", 60)] for n in part["plan"]["notes"][:48]]
+        return out
 
     @property
     def FL_TEMPLATES(self):
@@ -1197,7 +1216,8 @@ class Engine:
     def update_settings(self, changes):
         allowed = {"tempo_bpm", "key", "bars", "genre", "mood", "swing", "provider", "model", "gemini_model", "chatgpt_model",
                    "onboarded", "auto_tempo", "tempo_auto", "key_auto", "bars_auto", "remind_loop", "remind_cut", "careful",
-                   "feel", "locked_parts", "quality", "use_my_style", "auto_mixer", "auto_sounds", "guide_arrow", "listen_after", "kit_auto_load"}
+                   "feel", "locked_parts", "quality", "use_my_style", "auto_mixer", "auto_sounds", "guide_arrow", "listen_after", "kit_auto_load",
+                   "theme", "rack_open"}
         with self.state_lock:
             for k, v in changes.items():
                 if k not in allowed:
@@ -1221,11 +1241,13 @@ class Engine:
                     continue
                 elif k == "quality" and v not in ("best", "fast"):
                     continue
+                elif k == "theme" and v not in THEMES:
+                    continue
                 elif k == "model":
                     v = str(v)[:60]
                     self.state["settings"]["model_chosen"] = True   # a deliberate pick is never moved by a default change
                 elif k in ("onboarded", "auto_tempo", "tempo_auto", "key_auto", "bars_auto", "remind_loop", "remind_cut", "careful",
-                           "use_my_style", "auto_mixer", "auto_sounds", "guide_arrow", "listen_after", "kit_auto_load"):
+                           "use_my_style", "auto_mixer", "auto_sounds", "guide_arrow", "listen_after", "kit_auto_load", "rack_open"):
                     v = bool(v)
                 else:
                     v = str(v)[:60]
@@ -1661,6 +1683,7 @@ class Engine:
                     "instruments": None, "channel_roles": dict(getattr(self, "_chat_roles", {}) or {}),
                     "provider": resp["provider"], "created": _now(), "mode": request["mode"],
                     "reference_id": reference_id, "info": resp.get("info"), "request": text[:300],
+                    "genre": self.state["settings"].get("genre"),
                     "kit": chosen_kit if resp["parts"] and any(p["role"] == "drums" for p in resp["parts"]) else None}
         msg = {"id": uuid.uuid4().hex[:10], "role": "assistant", "text": resp["reply"], "time": _now(),
                "proposal_id": pid, "provider": resp["provider"]}

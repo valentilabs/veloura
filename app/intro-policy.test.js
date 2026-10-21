@@ -10,6 +10,11 @@ assert.strictEqual(shouldPlay(prev, { boot: 100, version: "0.9.1", time: t }), t
 assert.strictEqual(shouldPlay(prev, { boot: 100, version: "0.9.0", time: prev.lastSeen + AWAY_MS }), true, "4 hours away");
 assert.strictEqual(shouldPlay(prev, { boot: 100, version: "0.9.0", time: prev.lastSeen + AWAY_MS - 1 }), false, "just under 4 hours");
 assert.strictEqual(shouldPlay(prev, { boot: null, version: "0.9.0", time: t }), false, "boot time unknown: no false replays");
+const built = { ...prev, build: "1:42" };
+assert.strictEqual(shouldPlay(built, { boot: 100, version: "0.9.0", build: "1:42", time: t }), false, "same install: quick reopen stays silent");
+assert.strictEqual(shouldPlay(built, { boot: 100, version: "0.9.0", build: "1:77", time: t }), true, "reinstalled: plays even with the same version");
+assert.strictEqual(shouldPlay(prev, { boot: 100, version: "0.9.0", build: "1:42", time: t }), true, "migrated state with no build stamp: plays");
+assert.strictEqual(shouldPlay(built, { boot: 100, version: "0.9.0", build: null, time: t }), false, "build unknown: no false replays");
 console.log("intro policy ok");
 assert.strictEqual(AWAY_MS, 4 * 60 * 60 * 1000, "the away rule is 4 hours");
 assert.strictEqual(shouldPlay(prev, { boot: 100, version: "0.9.0", time: prev.lastSeen + 30 * 60 * 1000 }), false, "a quick reopen stays silent");
