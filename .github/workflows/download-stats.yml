@@ -1,0 +1,38 @@
+# Once a day, record each release file's download count into stats/downloads.csv on the "stats" branch.
+# GitHub only keeps running totals, so this daily snapshot is what gives day-by-day history.
+# veloura-update-mac.json is fetched once per app launch, so its count is a rough count of app opens.
+name: Download stats
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the stats branch (created on first run)
+        run: |
+          git init -q stats && cd stats
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git fetch -q --depth 1 origin stats; then git checkout -q -b stats FETCH_HEAD; else git checkout -q --orphan stats; fi
+      - name: Append today's counts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd stats && mkdir -p stats
+          f=stats/downloads.csv
+          [ -f "$f" ] || echo "date,tag,file,downloads" > "$f"
+          day=$(date -u +%F)
+          grep -v "^$day," "$f" > "$f.tmp" || true; mv "$f.tmp" "$f"
+          gh api --paginate "repos/${{ github.repository }}/releases" \
+            --jq ".[] | select(.draft|not) | .tag_name as \$t | .assets[] | \"$day,\(\$t),\(.name),\(.download_count)\"" >> "$f"
+      - name: Commit
+        run: |
+          cd stats
+          git config user.name "Valenti Labs"
+          git config user.email "valentilabs@users.noreply.github.com"
+          git add stats/downloads.csv
+          git diff --cached --quiet || git commit -qm "Download stats $(date -u +%F)"
+          git push -q origin HEAD:stats
