@@ -369,11 +369,7 @@ function orderedProposal(prop, m) {
   if (prop.mix) steps.push(stepBox(n++, "Mix", "Levels, panning and EQ", ["applied", "partial"].includes(prop.mix.status), mixCard(prop)));
   if (prop.guidance && prop.guidance.length) steps.push(stepBox(n++, "Finishing touches", "Things to do in FL yourself", false,
     prop.guidance.map((g, i) => guideCard(g, m.proposal_id + i))));
-  const open = prop.parts.filter((p) => p.status !== "applied");
-  const doAll = (open.length > 1 || (prop.kit && !prop.kit_loaded) || (prop.mix && prop.mix.status === "proposed")) ? h("div", { class: "addall" },
-    h("span", {}, "Veloura does each step in order: kit, drums, chords & melody, 808, then the mix."),
-    h("button", { class: "btn primary small glow", disabled: pending > 0, onclick: () => doAllSteps(prop) }, "Do all steps")) : null;
-  return h("div", { class: "rsteps" }, doAll, steps);
+  return h("div", { class: "rsteps" }, steps);
 }
 // ---------------------------------------------------------------- a reply's beat: one card, compact parts, one "Add all"
 // The full step-by-step view (kit, instruments, mix, finishing touches) is still there behind "Show steps".
@@ -620,27 +616,23 @@ async function runListen(auto) {
   dlg.showModal();
 }
 async function doAllSteps(prop) {
-  const missing = (prop.instruments || []).filter((x) => !x.channel).map((x) => INST_LABEL(x.instrument));
-  const autoKit = !!session.settings.kit_auto_load;
-  const plan = [prop.kit && !prop.kit_loaded ? (autoKit ? "load your drum kit (FL's sound is muted while it browses)" : "put your drum kit in a folder for you to drag in") : null,
-    "write the drums, then chords & melody, then the 808 (one part at a time)",
-    prop.mix && prop.mix.status === "proposed" ? "apply the mix" : null,
-    session.settings.listen_after !== false ? "play the beat for a few seconds to check the levels" : null].filter(Boolean);
-  if (!confirm(`Veloura will ${plan.join(", then ")}.${missing.length ? `\n\nSkipped until they have a channel: ${missing.join(", ")}.` : ""}\n\nYour own sounds are never changed. Go?`)) return;
-  if (prop.kit && !prop.kit_loaded) {
-    if (autoKit) {
-      const r = await withPending(() => api("/api/kit/load", { roles: prop.kit.roles, proposal_id: prop.id }), "Step 1 · loading your kit…");
-      if (r && !r.ok) toast("Some kit sounds couldn't load automatically; the rest of the steps still run.", "err");
-    } else stageKit(prop.kit.roles, prop.id);   // opens the folder + drag guide; the other steps carry on
-  }
+  // One button, no questions: parts go in one at a time (your own sounds are never changed; Undo everything reverses it).
+  const autoKit = !!session.settings.kit_auto_load, needKit = prop.kit && !prop.kit_loaded;
+  let kitGuide = false;
+  if (needKit && autoKit) {
+    const r = await withPending(() => api("/api/kit/load", { roles: prop.kit.roles, proposal_id: prop.id }), "Loading your kit…");
+    if (!r || !r.ok) kitGuide = true;
+  } else if (needKit) kitGuide = true;
   await addAll(prop);
   await refreshSession();
   const fresh = session.proposals[prop.id];
   if (fresh && fresh.mix && fresh.mix.status === "proposed") {
-    const r = await withPending(() => api("/api/mix/apply", { proposal_id: prop.id }), "Last step · mixing…");
+    const r = await withPending(() => api("/api/mix/apply", { proposal_id: prop.id }), "Mixing…");
     if (r && r.ok) toast("Mix applied ✓", "ok");
   }
-  if (session.settings.listen_after !== false) await runListen(true);
+  // the hand-picked kit still has to be dragged in: show that last so nothing covers it
+  if (kitGuide) await stageKit(prop.kit.roles, prop.id, true);
+  else if (session.settings.listen_after !== false && fresh && fresh.parts.every((p) => p.status === "applied")) await runListen(true);
 }
 
 // ---------------------------------------------------------------- proposal extras
@@ -725,13 +717,14 @@ function kitCard(kit, pid) {
     h("div", { class: "kit-head" }, h("span", { class: "eyebrow" }, "Your sound"), h("b", {}, "Drums from your library")),
     h("div", { class: "kit-row" }, Object.entries(roles).map(([r, s]) => h("div", { class: "ksound" }, playBtn(s.id),
       h("div", {}, h("small", {}, ROLE_LABEL[r] || r), h("b", {}, s.name), h("span", {}, s.kit)), favBtn(s.id, s.favorite)))),
-    h("div", { class: "row-btns" }, h("button", { class: "btn small primary glow", onclick: () => stageKit(roles) }, "Load into FL"),
+    h("p", { class: "kit-how" }, "Hand-picked from your library. Press Load into FL, then drag and drop these sounds from the Finder window into your Channel Rack."),
+    h("div", { class: "row-btns" }, h("button", { class: "btn small primary glow", onclick: () => stageKit(roles, pid) }, "Load into FL"),
       h("button", { class: "btn small", onclick: () => { showPage("sounds"); kitState = kit; store.set("kitState", kit); renderSounds(); } }, "Swap sounds")));
 }
-async function stageKit(roles, pid) {
+async function stageKit(roles, pid, skipAuto) {
   // Default: copy the kit into a folder and show it for one drag (fast, FL never browses or previews your sounds).
   // The Browser-walking loader is opt-in (Settings): it is slow and FL steps through every sound on the way.
-  const auto = session.settings.kit_auto_load ? await withPending(() => api("/api/kit/load", { roles, proposal_id: pid }), "Loading your kit into FL…") : null;
+  const auto = session.settings.kit_auto_load && !skipAuto ? await withPending(() => api("/api/kit/load", { roles, proposal_id: pid }), "Loading your kit into FL…") : null;
   if (auto && auto.ok) { toast("Kit loaded into your channels ✓", "ok"); return; }
   const failed = {};
   for (const [role, res] of Object.entries((auto && auto.results) || {})) if (!res.ok) failed[role] = roles[role];
@@ -752,8 +745,8 @@ function openLoadGuide(staged) {
       h("b", {}, ROLE_LABEL[role] || role), h("span", {}, f.name + ".wav"), h("small", {}, st.loaded ? "in FL as “" + st.channel + "”" : "drag onto its channel"));
   }));
   paint();
-  put(body, h("h2", {}, "Drag your kit into FL"),
-    h("p", { class: "muted" }, "Veloura copied the sounds into a Finder window (your originals aren't touched). FL doesn't let apps load samples, so this is the one manual step:"),
+  put(body, h("h2", {}, "Drag and drop these sounds into your Channel Rack"),
+    h("p", { class: "muted" }, "Veloura hand-picked this kit and opened it in a Finder window (your originals aren't touched). FL doesn't let apps load samples, so this one step is yours:"),
     h("div", { class: "load-visual" }, h("div", { class: "lv-finder" }, h("small", {}, "Finder"), Object.values(staged.files).slice(0, 4).map((f) => h("span", {}, f.name))),
       h("span", { class: "lv-arrow" }, svg(ICONS.arrow)), h("div", { class: "lv-rack" }, h("small", {}, "Channel Rack"), ["Kick", "Snare", "Hat", "808"].map((n) => h("span", {}, n)))),
     h("p", {}, "Drop each file onto the matching channel's name to replace its sound, or onto empty space to add a new channel. Rows turn green as Veloura sees them."),

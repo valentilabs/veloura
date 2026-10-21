@@ -113,7 +113,7 @@ class SetupSpeedTests(unittest.TestCase):
         self.assertFalse(DEFAULT_SETTINGS["kit_auto_load"])
         with open(os.path.join(ROOT, "app", "ui", "workspace.js"), encoding="utf-8") as f:
             js = f.read()
-        self.assertIn("session.settings.kit_auto_load ? await withPending(() => api(\"/api/kit/load\"", js)
+        self.assertIn("session.settings.kit_auto_load && !skipAuto ? await withPending(() => api(\"/api/kit/load\"", js)
 
 
 if __name__ == "__main__":

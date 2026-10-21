@@ -922,11 +922,13 @@ async function addAllInner(prop, only) {
     const r = await applyPart(fresh, i);
     if (cancelRequested) { toast("Stopped. Parts already added stay in FL.", ""); return; }
     if (!r || !r.ok) failed.push(part.name);
+    // FL isn't answering at all: stop here instead of waiting it out once per part
+    if (!r || r.code === "no_result") { const rest = order.slice(order.indexOf(i) + 1).map((j) => fresh.parts[j].name); failed.push(...rest); break; }
   }
   if (session.settings.auto_mixer !== false) { try { const m = await api("/api/mixer-setup", {}); if (m.routed && m.routed.length) toast(`Gave ${m.routed.length} channel(s) their own mixer track`, "ok"); } catch (_) {} }
   await refreshSession();
   if (!skipped.length && !failed.length) toast("Everything's in FL. Press play! ▶", "ok");
-  else toast([skipped.length ? `Needs a channel: ${skipped.join(", ")}` : "", failed.length ? `Didn't go in: ${failed.join(", ")} (press Apply again on its card)` : ""].filter(Boolean).join(" · "), "err");
+  else toast([skipped.length ? `Needs a channel: ${skipped.join(", ")}` : "", failed.length ? `Didn't go in: ${failed.join(", ")} (press Add again on its row)` : ""].filter(Boolean).join(" · "), "err");
 }
 
 async function undoPart(name) {

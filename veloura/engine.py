@@ -1276,6 +1276,16 @@ class Engine:
         except (ControllerUnavailable, ControllerError) as e:
             # Keep virtual ports open: closing them would make them vanish from FL's MIDI settings.
             st = {"connected": False, "detail": str(e)}
+            if cached is not None and cached.get("connected"):
+                # One slow answer (FL busy loading a plugin or saving) used to flip the app to "not connected".
+                # Ask once more, a little more patiently, before saying the link is gone.
+                try:
+                    proj = self.controller.request("project", timeout=2.5)
+                    st = {"connected": True, "detail": "Connected (API %s)" % proj.get("api_version"), "tempo": proj.get("tempo"),
+                          "pattern": proj.get("pattern"), "channels": proj.get("channels", []),
+                          "api_version": proj.get("api_version"), "safe_to_edit": proj.get("safe_to_edit", True)}
+                except (ControllerUnavailable, ControllerError):
+                    pass
         self._ctl_cache = (time.time(), st)
         return st
 
@@ -1586,7 +1596,10 @@ class Engine:
         from . import ensemble as _ens
         chans_now = self.controller_status().get("channels") or []
         # what each instrument channel is: worked out from the sound loaded on it, overridden by what this message says
-        roles_now = dict(self.detect_channel_roles(chans_now), **_ens.parse_channel_roles(text, chans_now))
+        try:
+            roles_now = dict(self.detect_channel_roles(chans_now), **_ens.parse_channel_roles(text, chans_now))
+        except Exception:   # a channel FL describes oddly must not stop the beat
+            roles_now = {}
         self._chat_roles = roles_now
         with self.state_lock:
             ref = request.get("reference")
@@ -1648,7 +1661,8 @@ class Engine:
             self.save()
             return msg
         except Exception as e:  # never lose the turn: every failure becomes a visible chat message
-            text_err = str(e) if isinstance(e, ai.ProviderError) else "Something went wrong talking to the AI: %r" % (e,)
+            text_err = str(e) if isinstance(e, ai.ProviderError) else (
+                "Something went wrong while writing the beat (%s). Nothing was changed; try again." % (e.__class__.__name__,))
             msg = {"id": uuid.uuid4().hex[:10], "role": "assistant", "text": text_err, "time": _now(), "error": True,
                    "provider": settings["provider"]}
             with self.state_lock:
@@ -1659,42 +1673,54 @@ class Engine:
         finally:
             self.busy = None
             self.clear_progress()
-        pid = uuid.uuid4().hex[:10]
-        channels = self.controller_status().get("channels") or []
-        if request["mode"] == "sample" and request.get("reference"):
-            resp["guidance"].insert(0, self._sample_guide(request["reference"], request.get("sample_channel") or "Sample", channels))
-        for p in resp["parts"]:
-            p["_roles"] = dict(getattr(self, "_chat_roles", {}) or {})
-            p["destination"] = self._destination(p, channels)
-            p["status"] = "proposed"
-            p["result"] = None
-            existing = parts.get(p["name"])
-            p["action"] = "revise" if existing else "new"
-        mix_block = None
-        if resp.get("mix"):
-            preview, mproblems = [], []
-            if mix_state:
-                _, preview, mproblems = mixmod.resolve(resp["mix"], mix_state, self._mix_name_map(
-                    {"parts": resp["parts"], "mix": {"moves": resp["mix"]}}, mix_state))
-            else:
-                mproblems = ["Mix moves need the FL controller connected."]
-            mix_block = {"moves": resp["mix"], "preview": preview, "problems": mproblems, "status": "proposed", "result": None}
-        proposal = {"id": pid, "parts": resp["parts"], "guidance": resp["guidance"], "problems": problems, "mix": mix_block,
-                    "instruments": None, "channel_roles": dict(getattr(self, "_chat_roles", {}) or {}),
-                    "provider": resp["provider"], "created": _now(), "mode": request["mode"],
-                    "reference_id": reference_id, "info": resp.get("info"), "request": text[:300],
-                    "genre": self.state["settings"].get("genre"),
-                    "kit": chosen_kit if resp["parts"] and any(p["role"] == "drums" for p in resp["parts"]) else None}
-        msg = {"id": uuid.uuid4().hex[:10], "role": "assistant", "text": resp["reply"], "time": _now(),
-               "proposal_id": pid, "provider": resp["provider"]}
-        proposal["instruments"] = self.instruments_needed(proposal, channels)
-        with self.state_lock:
-            self.state["proposals"][pid] = proposal
-            self.state["messages"].append(msg)
-        for pr in problems:
-            self.event("warn", pr)
-        self.save()
-        return msg
+        try:
+            pid = uuid.uuid4().hex[:10]
+            channels = self.controller_status().get("channels") or []
+            if request["mode"] == "sample" and request.get("reference"):
+                resp["guidance"].insert(0, self._sample_guide(request["reference"], request.get("sample_channel") or "Sample", channels))
+            for p in resp["parts"]:
+                p["_roles"] = dict(getattr(self, "_chat_roles", {}) or {})
+                p["destination"] = self._destination(p, channels)
+                p["status"] = "proposed"
+                p["result"] = None
+                existing = parts.get(p["name"])
+                p["action"] = "revise" if existing else "new"
+            mix_block = None
+            if resp.get("mix"):
+                preview, mproblems = [], []
+                if mix_state:
+                    _, preview, mproblems = mixmod.resolve(resp["mix"], mix_state, self._mix_name_map(
+                        {"parts": resp["parts"], "mix": {"moves": resp["mix"]}}, mix_state))
+                else:
+                    mproblems = ["Mix moves need the FL controller connected."]
+                mix_block = {"moves": resp["mix"], "preview": preview, "problems": mproblems, "status": "proposed", "result": None}
+            proposal = {"id": pid, "parts": resp["parts"], "guidance": resp["guidance"], "problems": problems, "mix": mix_block,
+                        "instruments": None, "channel_roles": dict(getattr(self, "_chat_roles", {}) or {}),
+                        "provider": resp["provider"], "created": _now(), "mode": request["mode"],
+                        "reference_id": reference_id, "info": resp.get("info"), "request": text[:300],
+                        "genre": self.state["settings"].get("genre"),
+                        "kit": chosen_kit if resp["parts"] and any(p["role"] == "drums" for p in resp["parts"]) else None}
+            msg = {"id": uuid.uuid4().hex[:10], "role": "assistant", "text": resp["reply"], "time": _now(),
+                   "proposal_id": pid, "provider": resp["provider"]}
+            proposal["instruments"] = self.instruments_needed(proposal, channels)
+            with self.state_lock:
+                self.state["proposals"][pid] = proposal
+                self.state["messages"].append(msg)
+            for pr in problems:
+                self.event("warn", pr)
+            self.save()
+            return msg
+        except Exception as e:   # the beat came back but matching it to FL failed: still answer, never a bare error
+            import traceback
+            traceback.print_exc()
+            msg = {"id": uuid.uuid4().hex[:10], "role": "assistant", "time": _now(), "error": True, "provider": settings["provider"],
+                   "text": "The AI answered, but Veloura couldn't match the beat to your FL project (%s). Nothing was changed. "
+                           "Try again; if it keeps happening, reconnect FL from Setup." % (e.__class__.__name__,)}
+            with self.state_lock:
+                self.state["messages"].append(msg)
+            self.event("error", "After the AI reply: %r" % (e,))
+            self.save()
+            return msg
 
     @staticmethod
     def _route_key(part):
@@ -1957,11 +1983,21 @@ class Engine:
 
     def _send(self, cmd, mutating, restore_focus=True, focus=True):
         bp.send_command(cmd)
-        if focus:
-            self._focus_piano_roll()
-        kw = {"get_started": lambda: bp.command_started(cmd["id"])} if self.trigger is fl_trigger else {}
-        result, secs, _ = self.trigger.trigger_and_wait(lambda: bp.find_result(cmd["id"]), timeout=self.timeout,
-                                                        retry_trigger=not mutating, restore_focus=restore_focus, **kw)
+        try:
+            if focus:
+                self._focus_piano_roll()
+            kw = {"get_started": lambda: bp.command_started(cmd["id"])} if self.trigger is fl_trigger else {}
+            result, secs, _ = self.trigger.trigger_and_wait(lambda: bp.find_result(cmd["id"]), timeout=self.timeout,
+                                                            retry_trigger=not mutating, restore_focus=restore_focus, **kw)
+        except Exception as e:
+            # never leave the command queued: a stuck command used to block every later Add ("Command … is still waiting")
+            result, secs = bp.find_result(cmd["id"]), 0.0
+            if result is None:
+                bp.cancel_pending()
+                bp.log_attempt({"id": cmd["id"], "type": cmd["type"], "trigger": "auto", "outcome": "trigger_error",
+                                "error": repr(e)})
+                raise EngineError("Veloura couldn't reach FL Studio to run the bridge, so nothing was changed. "
+                                  "Check that FL is open and Accessibility is on for Veloura, then try again.")
         if result is not None:
             self.bridge_ok_at = time.time()
             with self.state_lock:

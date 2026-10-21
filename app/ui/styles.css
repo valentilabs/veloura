@@ -1872,3 +1872,12 @@ body { background:
 .flreal.small figcaption { display: none; }
 .btn.insta { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
 .btn.insta svg { width: 15px; height: 15px; margin: 0; }
+
+/* 0.9.1 fixes from the first outside test: one outline on the prompt box (the box glows, the text field inside doesn't) */
+.composer textarea:focus, .composer2 textarea:focus, .composer textarea:focus-visible, .composer2 textarea:focus-visible { outline: none; box-shadow: none; }
+.kit-card .kit-how { margin: 8px 0 2px; font-size: 13px; color: var(--muted, var(--text)); line-height: 1.45; }
+/* Feel lives in the + menu now: one slider per row so it fits the popover */
+#pop .feel-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 6px; }
+#pop .feel-row { display: grid; grid-template-columns: 88px 1fr 92px; gap: 12px; align-items: center; font-size: 13px; }
+#pop .feel-row span:last-child { text-align: right; }
+#pop .feel-row input[type="range"] { width: 100%; padding: 0; border: 0; background: transparent; box-shadow: none; accent-color: var(--accent); }

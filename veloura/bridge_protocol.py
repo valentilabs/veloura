@@ -270,8 +270,12 @@ def send_command(cmd, keep_record=True):
         raise BridgeError("The bridge folder does not exist yet. In Veloura, open Setup and click Install Veloura's FL helpers.")
     waiting = pending_command()
     if waiting is not None:
-        raise BridgeError("Command %s is still waiting to be run in FL Studio. Run the script, or cancel it first."
-                          % waiting.get("id"))
+        if command_started(waiting.get("id")):
+            raise BridgeError("FL Studio is still finishing the last change. Give it a moment, then try again.")
+        # A leftover from a run FL never picked up (FL closed, the app quit mid-write): withdraw it so it can never
+        # run later by surprise, and carry on with the new command.
+        _retire_command_files()
+        log_attempt({"id": waiting.get("id"), "type": waiting.get("type"), "trigger": "auto", "outcome": "withdrawn_stale"})
     _retire_command_files()
     os.makedirs(sent_dir(), exist_ok=True)
     if keep_record:

@@ -236,8 +236,12 @@ def trigger_and_wait(get_result, timeout=4.0, retry_trigger=False, restore_focus
     if front and front != FL_PROCESS:
         _previous_app["name"] = front
     try:
-        _activate_fl()
-        _send_rerun_shortcut()
+        try:
+            _activate_fl()
+            _send_rerun_shortcut()
+        except (TriggerError, subprocess.TimeoutExpired, OSError):
+            # System Events refused or hung: treat it as "FL didn't answer" (nothing was written) instead of an error
+            return get_result(), time.time() - start, triggers
         triggers += 1
         last_trigger["mode"] = "foreground"
         next_retry = time.time() + 1.0
@@ -246,7 +250,10 @@ def trigger_and_wait(get_result, timeout=4.0, retry_trigger=False, restore_focus
             if result is not None:
                 return result, time.time() - start, triggers
             if retry_trigger and time.time() >= next_retry:
-                _send_rerun_shortcut()
+                try:
+                    _send_rerun_shortcut()
+                except (TriggerError, subprocess.TimeoutExpired, OSError):
+                    pass
                 triggers += 1
                 next_retry = time.time() + 1.0
             time.sleep(0.05)
