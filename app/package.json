@@ -1,0 +1,21 @@
+{
+  "name": "veloura",
+  "productName": "Veloura",
+  "version": "0.9.0",
+  "description": "Veloura Beta: an AI producer for FL Studio, by Valenti Labs",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev-service": "cd .. && python3 -m veloura.service --port 8765 --token dev --no-stdin-watch",
+    "package": "node build/package.js",
+    "package:clean": "zsh build/build-clean.sh"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "electron": "^44.7.1"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0"
+  }
+}

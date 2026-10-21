@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Veloura Beta</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Main">
+    <div class="rail-top"></div>
+    <button class="brand" id="brandBtn" title="About Veloura Beta"><span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="beta-tag">Beta</span></button>
+    <button class="nav active" data-page="studio"><svg viewBox="0 0 24 24"><path d="M4 5h16v10H8l-4 4z"/></svg><span>Studio</span></button>
+    <button class="nav" data-page="tracks"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9h4M7 13h7M13 9h4M7 17h3"/></svg><span>Beat</span></button>
+    <button class="nav" data-page="sounds"><svg viewBox="0 0 24 24"><path d="M4 9h16v6a8 3 0 0 1-16 0z"/><path d="M4 9a8 3 0 0 0 16 0 8 3 0 0 0-16 0z"/></svg><span>Sounds</span></button>
+    <button class="nav" data-page="setup"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M12 3l8 4v5c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V7z"/></svg><span>Setup</span><b class="badge" id="setupBadge" hidden></b></button>
+    <button class="nav" data-page="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span></button>
+    <button class="nav" data-page="help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/></svg><span>Help</span></button>
+    <div class="rail-spacer"></div>
+    <button class="conn" id="connBtn" title="Connection"><span class="dot" id="connDot"></span><span id="connText">…</span></button>
+  </nav>
+
+  <main class="main">
+    <!-- ===== STUDIO ===== -->
+    <section class="page active" id="page-studio">
+      <header class="topbar slim">
+        <h1>Studio</h1>
+        <button class="project-chip" id="projectChip" title="Each FL project has its own chat"></button>
+        <div class="topbar-right"><span class="fl-info" id="flInfo"></span><span class="provider-pill" id="providerPill"></span>
+          <button class="icon-btn" id="rackToggle" title="Show or hide the Channel Rack" aria-label="Channel Rack"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 9v6M12 9v6M16 9v6"/></svg></button></div>
+      </header>
+      <div class="chat-scroll" id="chatScroll"><div class="chat" id="chat"></div></div>
+      <button class="read-guide" id="readGuide" type="button" hidden aria-label="Scroll to the start of the reply" title="Start reading here">
+        <svg viewBox="0 0 40 64"><path class="rg-shaft" d="M21 60c-1.5-7-0.5-14 0.8-21.5 1.2-7.4 0.4-15-0.6-27.5"/><path class="rg-head" d="M11.5 20.5c3.6-4.2 6.1-8.4 9.4-13.3 2.6 4.6 5.4 8.4 8.8 12.6"/></svg>
+      </button>
+      <aside class="rackpanel glass" id="rackPanel" aria-label="Channel Rack">
+        <div class="rp-head"><b>Channel Rack</b><span class="rp-pat" id="rackPat"></span><span class="spacer"></span><div class="rp-bars" id="rackBars"></div></div>
+        <div class="rp-body" id="rackBody"></div>
+        <div class="rp-foot" id="rackFoot"></div>
+      </aside>
+      <div class="dock" id="dock">
+        <div class="hero-title" id="heroTitle">
+          <span class="eyebrow">Veloura Studio</span>
+          <h2>Make something.</h2>
+          <p>Say the vibe. Veloura writes it into FL with your sounds.</p>
+        </div>
+        <div class="banner conn-banner" id="connBanner" hidden></div>
+        <div class="banner prep" id="prepBanner" hidden></div>
+        <div class="banner arm glass" id="armBanner" hidden>
+          <div class="arm-text"><b>Connect the bridge</b><span>In the Piano Roll, click the <b>Tools</b> icon, then <b>Scripts ▸ veloura_bridge</b>. Once per FL launch.</span>
+            <div class="row-btns"><button class="btn small glow" id="armOpen">Open a Piano Roll</button><button class="btn small ghost" id="armCheck">Check</button></div></div>
+          <div class="arm-mock" id="armMock"></div>
+        </div>
+        <div class="beat-strip" id="beatStrip" hidden></div>
+        <div class="landed" id="landed" hidden aria-live="polite"></div>
+        <div class="busy working" id="busy" hidden>
+          <div class="notes-stage" id="notesStage" aria-hidden="true"><span class="eq"><i></i><i></i><i></i><i></i><i></i></span></div>
+          <div class="w-main">
+            <div class="w-top"><span class="w-stage" id="busyText"></span><span class="w-pct" id="wPct"></span></div>
+            <div class="w-detail" id="wDetail"></div>
+            <div class="w-bar"><i id="wBar"></i></div>
+          </div>
+          <button class="btn small cancel-btn" id="cancelBtn" type="button" title="Stop (Esc)">Cancel <kbd>esc</kbd></button>
+        </div>
+        <div class="chips" id="chips"></div>
+        <form class="composer2" id="composer">
+          <div class="attach-row" id="attach" hidden></div>
+          <textarea id="input" rows="1" placeholder="What are we making tonight?"></textarea>
+          <div class="composer-bar">
+            <button type="button" class="plus" id="plusBtn" aria-label="More options" title="Samples, songs, genres and tools"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+            <span id="modeChip"></span>
+            <span class="spacer"></span>
+            <button type="button" class="model-label" id="modelLabel" title="Choose the AI model"></button>
+            <button class="send" id="send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+          </div>
+        </form>
+        <div class="pills" id="pills"></div>
+        <div class="hero-extra" id="heroExtra">
+          <div class="quick-cards" id="quickCards"></div>
+          <div class="section-label">Pick a style</div>
+          <div class="genre-tiles" id="genreTiles"></div>
+          <details class="feel" id="feelPanel"><summary><span>Feel</span><small id="feelSummary"></small></summary><div class="feel-grid" id="feelGrid"></div></details>
+        </div>
+        <input type="file" id="fileInput" accept="audio/*,.wav,.mp3,.m4a,.aif,.aiff,.flac" hidden>
+      </div>
+    </section>
+
+    <!-- ===== BEAT WORKSPACE ===== -->
+    <section class="page" id="page-tracks">
+      <header class="topbar">
+        <h1>Beat</h1>
+        <div class="topbar-right"><button class="btn small" id="exportAll">Save all as MIDI</button></div>
+      </header>
+      <div class="page-body">
+        <div class="beat-hero" id="beatHero"></div>
+        <div class="beat-groups" id="beatGroups"></div>
+        <div class="arrangement" id="arrangement"></div>
+        <details class="history-drawer" id="historyDrawer"><summary>History · everything Veloura has written</summary><div class="track-grid" id="trackGrid"></div></details>
+      </div>
+    </section>
+
+    <!-- ===== SOUNDS ===== -->
+    <section class="page" id="page-sounds">
+      <header class="topbar"><h1>Sounds</h1></header>
+      <div class="page-body">
+        <div class="big-title"><span class="eyebrow">Your collection</span><h2>My sounds.</h2><p>Add your drum-kit folders once. Veloura sorts every sound and picks kits that fit each beat.</p></div>
+        <div class="lib-top" id="libTop"></div>
+        <div class="lib-cats" id="libCats"></div>
+        <div class="lib-browse" id="libBrowse"></div>
+        <div class="section-label big">Build a kit</div>
+        <div class="kit-panel" id="kitPanel"></div>
+        <div class="section-label big">My style</div>
+        <div class="style-panel" id="stylePanel"></div>
+        <div class="section-label big">Instrument sounds</div>
+        <div class="inst-sounds" id="instSounds"></div>
+      </div>
+    </section>
+
+    <!-- ===== SETUP ===== -->
+    <section class="page" id="page-setup">
+      <header class="topbar">
+        <h1 id="setupTitle">Connect to FL Studio</h1>
+        <p class="sub" id="setupSub">Five quick steps. Each one turns green by itself when it's done.</p>
+      </header>
+      <div class="page-body narrow">
+        <div class="progress"><div class="progress-bar" id="setupProgress"></div></div>
+        <div class="note-box warn reconnect-box" id="setupReconnect" hidden></div>
+        <ol class="steps" id="steps"></ol>
+        <div class="setup-done" id="setupDone">
+          <button class="btn primary big" id="startMaking">Start making music →</button>
+          <button class="link" id="skipSetup">Skip for now</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SETTINGS ===== -->
+    <section class="page" id="page-settings">
+      <header class="topbar"><h1>Settings</h1></header>
+      <div class="page-body narrow">
+        <h2>AI producer</h2>
+        <div class="provider-grid" id="providerGrid"></div>
+        <div class="card" id="providerDetail"></div>
+
+        <h2>Options</h2>
+        <div class="card grid2 options">
+          <label class="toggle full"><input type="checkbox" id="setAutoTempo"><span>Match FL's tempo automatically when adding parts</span></label>
+          <label class="toggle full"><input type="checkbox" id="setRemindLoop"><span>Remind me to turn off “Use loop points” on new sounds</span></label>
+          <label class="toggle full"><input type="checkbox" id="setRemindCut"><span>Remind me to turn on “Cut itself” on 808s and bass</span></label>
+          <label class="toggle full"><input type="checkbox" id="setQuality"><span>Best of two: write two drafts at once and keep the stronger one (uses your AI twice per request)</span></label>
+          <label class="toggle full"><input type="checkbox" id="setAutoMixer"><span>Give every channel its own mixer track automatically</span></label>
+          <label class="toggle full"><input type="checkbox" id="setListenAfter"><span>After “Do all steps”, play the beat briefly and check the levels</span></label>
+          <label class="toggle full"><input type="checkbox" id="setGuideArrow"><span>Show a little arrow on new replies pointing to where to start reading</span></label>
+          <label class="toggle full"><input type="checkbox" id="setKitAuto"><span>Load kits by walking FL's Browser (slower: FL steps through your sounds with Master muted). Off: Veloura copies the kit into a folder for one drag.</span></label>
+          <label class="toggle full"><input type="checkbox" id="setCareful"><span>Careful mode: ask before writing over notes or steps that are already there</span></label>
+        </div>
+
+        <h2>Maintenance</h2>
+        <div class="card row-btns">
+          <button class="btn small" id="repairBridge">Reinstall FL helpers</button>
+          <button class="btn small" id="openExports">Open MIDI exports</button>
+          <button class="btn small" id="openLogs">Open logs</button>
+          <button class="btn small" id="rerunSetup">Run setup again</button>
+          <button class="btn small danger" id="clearChat">Clear conversation</button>
+        </div>
+
+        <details class="activity-box" id="activityBox">
+          <summary><h2>Activity</h2><span class="muted">Show what Veloura did</span></summary>
+          <ol class="activity card" id="events"></ol>
+        </details>
+      </div>
+    </section>
+
+    <!-- ===== HELP ===== -->
+    <section class="page" id="page-help">
+      <header class="topbar"><h1>Help</h1></header>
+      <div class="page-body narrow help">
+        <div class="card about-card" id="aboutCard"></div>
+        <div class="help-grid">
+          <div class="card">
+            <h3>Quick start</h3>
+            <ol class="short">
+              <li><b>Describe a vibe</b> in Studio.</li>
+              <li>Click <b>Add to FL</b>. Real, editable notes land in FL.</li>
+              <li>Ask for changes: “darker”, “less busy”, “add hats”.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Best tip</h3>
+            <p class="tip"><b>Best way to get a melody:</b> load the sound in FL first, then tell Veloura what to play on it.</p>
+            <p class="quote">“add slow string chords in ZENOLOGY 2”</p>
+          </div>
+        </div>
+
+        <div class="card plan-card">
+          <h3>Use Veloura with a paid ChatGPT plan</h3>
+          <p>ChatGPT is the recommended way to use Veloura. It needs a <b>paid</b> plan; a free ChatGPT account won't connect.</p>
+          <ul class="plans">
+            <li><b>ChatGPT Go</b><span>Cheapest, lowest limits. Not in every country.</span></li>
+            <li><b>ChatGPT Plus</b><span>$20/month. Plenty for most producers.</span></li>
+            <li><b>ChatGPT Pro</b><span>Highest limits.</span></li>
+          </ul>
+          <p class="muted">Other options: a Google Gemini key (free tier), a Claude key (pay per use), or Offline (free, not AI).</p>
+        </div>
+
+        <h2>Questions</h2>
+        <div class="faq">
+          <details><summary>Veloura can't connect to FL Studio</summary><div>Do these in order:<span id="helpReconnect"></span></div></details>
+          <details><summary>“FL didn't respond”</summary><div>FL was probably restarted. Open any Piano Roll and choose <kbd>Tools ▸ Scripts ▸ veloura_bridge</kbd> once. Close any open dialog in FL.</div></details>
+          <details><summary>The controller won't turn green</summary><div>Open Veloura <em>before</em> FL. If FL is already open, click <b>Restart FL for me</b> on the red banner in Studio.</div></details>
+          <details><summary>Accessibility keeps asking</summary><div>System Settings ▸ Privacy &amp; Security ▸ Accessibility: turn on <b>Veloura</b>, then quit and reopen Veloura.</div></details>
+          <details><summary>A part went to the wrong channel</summary><div>Pick the right channel from the part's menu. Veloura moves it and remembers your choice.</div></details>
+          <details><summary>Drums went to the Piano Roll</summary><div>The FL controller isn't connected, or no channel name matches. See Setup, step 3.</div></details>
+          <details><summary>Undo something</summary><div>Press <kbd>Cmd</kbd>+<kbd>Z</kbd> in FL, or click <b>Undo</b> on a part. To reverse everything: click the project name ▸ <b>Undo everything Veloura did</b>.</div></details>
+          <details><summary>The AI says it's busy</summary><div>Wait a minute and try again, or switch AI in Settings.</div></details>
+          <details><summary>What Veloura can't do yet</summary><div>Insert effects, arrange the Playlist or hear your beat. It can pick presets, program drums, write melodies, set the tempo and mix, and gives short steps for the rest.</div></details>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="popover" id="pop" hidden></div>
+<div class="menu" id="plusMenu" hidden></div>
+
+<dialog id="modal"><div class="modal" id="modalBody"></div></dialog>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="intro.js"></script>
+<script src="brands.js"></script>
+<script src="marks.js"></script>
+<script src="app.js"></script>
+<script src="workspace.js"></script>
+</body>
+</html>

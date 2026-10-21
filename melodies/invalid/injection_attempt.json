@@ -1,0 +1,3 @@
+{"schema": "cadence.melody/1", "tempo_bpm": 140, "time_signature": [4, 4], "bars": 4,
+ "notes": [{"pitch": "__import__('os').remove('x')", "start": 0, "length": 1, "velocity": 100}],
+ "run": "import os"}

@@ -1,0 +1,2 @@
+{"schema": "cadence.melody/1", "tempo_bpm": 140, "time_signature": [4, 4], "bars": 4,
+ "notes": [{"pitch": 65, "start": 15, "length": 2, "velocity": 100}]}

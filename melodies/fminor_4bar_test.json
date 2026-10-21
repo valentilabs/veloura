@@ -1,0 +1,27 @@
+{
+  "schema": "cadence.melody/1",
+  "title": "Cadence test - F minor 4 bars",
+  "tempo_bpm": 140,
+  "time_signature": [4, 4],
+  "key": "F minor",
+  "bars": 4,
+  "target": "Any instrument channel in a disposable test project",
+  "notes": [
+    {"pitch": 65, "start": 0,    "length": 1,    "velocity": 100},
+    {"pitch": 68, "start": 1,    "length": 0.5,  "velocity": 90},
+    {"pitch": 72, "start": 1.5,  "length": 1.5,  "velocity": 105},
+    {"pitch": 70, "start": 3,    "length": 1,    "velocity": 85},
+    {"pitch": 68, "start": 4,    "length": 0.75, "velocity": 95},
+    {"pitch": 67, "start": 4.75, "length": 0.25, "velocity": 70},
+    {"pitch": 65, "start": 5,    "length": 1,    "velocity": 100},
+    {"pitch": 63, "start": 6,    "length": 2,    "velocity": 80},
+    {"pitch": 65, "start": 8,    "length": 0.5,  "velocity": 100},
+    {"pitch": 72, "start": 8.5,  "length": 0.5,  "velocity": 110},
+    {"pitch": 73, "start": 9,    "length": 1,    "velocity": 100},
+    {"pitch": 72, "start": 10,   "length": 1,    "velocity": 95},
+    {"pitch": 70, "start": 11,   "length": 1,    "velocity": 90},
+    {"pitch": 68, "start": 12,   "length": 1,    "velocity": 95},
+    {"pitch": 67, "start": 13,   "length": 1,    "velocity": 85},
+    {"pitch": 65, "start": 14,   "length": 2,    "velocity": 100}
+  ]
+}

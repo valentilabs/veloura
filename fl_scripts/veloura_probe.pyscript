@@ -1,0 +1,31 @@
+# Veloura probe (read-only). Run once from the Piano Roll: Tools > Scripts > veloura_probe
+# It changes nothing. It checks which FL modules Piano Roll scripts can use on this FL version (FL 2026 has an
+# internal "ilmcp" module behind its AI assistant) and writes the answer to veloura_io/probe.json for Veloura.
+# Afterwards run Tools > Scripts > veloura_bridge again so "Run last script again" points back at the bridge.
+
+import flpianoroll as flp
+import json
+import os
+
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "veloura_io", "probe.json")
+
+
+def _try(name):
+    try:
+        mod = __import__(name)
+        return {"ok": True, "names": sorted(n for n in dir(mod) if not n.startswith("_"))}
+    except Exception as e:
+        return {"ok": False, "error": "%s: %s" % (type(e).__name__, e)}
+
+
+def apply(form):
+    report = {m: _try(m) for m in ("ilmcp", "channels", "mixer", "plugins", "general", "ui", "patterns")}
+    report["flpianoroll"] = sorted(n for n in dir(flp) if not n.startswith("_"))
+    with open(OUT, "w") as f:
+        json.dump(report, f, indent=1)
+    flp.Utils.ShowMessage("Veloura probe done. Now run Tools > Scripts > veloura_bridge once more.")
+
+
+def createDialog():
+    form = flp.ScriptDialog("Veloura probe", "Checks what this FL version lets Veloura do. Changes nothing.")
+    return form

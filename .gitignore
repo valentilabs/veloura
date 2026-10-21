@@ -1,0 +1,22 @@
+.venv/
+data/
+logs/
+dist/
+exports/
+app/node_modules/
+__pycache__/
+*.pyc
+melodies/*
+# the test fixture tests/test_veloura.py reads
+!melodies/fminor_4bar_test.json
+!melodies/invalid/
+backups/
+.DS_Store
+claude_project/code/
+claude_project/yo.json
+claude_project/DEVLOG.md
+claude_project/README.md
+Veloura_Claude_Project.zip
+app/build/.cache/
+app/root.json
+docs/music-quality-samples/

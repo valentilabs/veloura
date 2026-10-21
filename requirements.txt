@@ -1,0 +1,6 @@
+# Python packages Veloura needs (versions match the working .venv, Python 3.9, 2026-10-15).
+# Install: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+python-rtmidi==1.5.8   # virtual MIDI ports for the FL controller link
+numpy==2.0.2           # audio analysis
+soundfile==0.13.1      # reading samples and reference audio
+librosa==0.10.2.post1  # tempo, key and pitch detection (pulls in scipy, scikit-learn, numba)
