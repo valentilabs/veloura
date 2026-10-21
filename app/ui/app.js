@@ -287,7 +287,7 @@ function renderRack() {
   $("page-studio").classList.toggle("norack", !rackOpen);
   if (!rack || !rack.connected) {
     $("rackPat").textContent = ""; $("rackBars").replaceChildren();
-    body.replaceChildren(h("div", { class: "rp-empty" }, illustration("cable", 64), h("b", {}, "Not connected"), h("span", {}, "Connect the FL controller (Setup step 3) to see and edit your Channel Rack here."),
+    body.replaceChildren(h("div", { class: "rp-empty" }, unpluggedScene(170), h("b", {}, "Not connected"), h("span", {}, "Connect the FL controller (Setup step 3) to see and edit your Channel Rack here."),
       h("button", { class: "btn small", onclick: () => showPage("setup") }, "Open Setup")));
     $("rackFoot").textContent = ""; return;
   }

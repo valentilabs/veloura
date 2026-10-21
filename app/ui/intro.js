@@ -1,4 +1,4 @@
-// Veloura's opening: the flat blue tile, its seven bars rising and the wordmark, timed to the developer's 3-second startup
+// Veloura's opening: the Deep Sable tile, its seven champagne bars rising and the Veloura wordmark, timed to the developer's 3-second startup
 // sound (startup.mp3). Plays only when the app asks for it (#intro=1: first launch after the Mac starts, after an
 // update, or after 4+ hours away). A click or Esc skips it. With Reduce Motion on it doesn't play.
 "use strict";
@@ -20,10 +20,17 @@
   });
   const word = document.createElement("div");
   word.className = "intro-word";
-  word.textContent = "Veloura";
+  const name = document.createElement("span");
+  name.className = "name";
+  name.textContent = "Veloura";
+  word.appendChild(name);
   const tag = document.createElement("span");
+  tag.className = "tag";
   tag.textContent = "Beta";
   word.appendChild(tag);
+  const spark = document.createElement("i");   // a little four-point star glints once at the end
+  spark.className = "intro-spark";
+  word.appendChild(spark);
   const hint = document.createElement("div");
   hint.className = "intro-hint";
   hint.textContent = "Click to skip";

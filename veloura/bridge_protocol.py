@@ -33,7 +33,7 @@ SCRIPT_INSTALLED = os.path.join(FL_SCRIPTS_DIR, "veloura_bridge.pyscript")
 CONTROLLER_SOURCE = os.path.join(ROOT, "fl_scripts", "device_VelouraController.py")
 CONTROLLER_DIR = os.path.expanduser("~/Documents/Image-Line/FL Studio/Settings/Hardware/Veloura Controller")
 # What the app installed into FL while it was called Cadence (before 2026-10-21): removed once Veloura's are in place.
-OLD_FL_FILES = [os.path.join(FL_SCRIPTS_DIR, "cadence_bridge.pyscript"),
+OLD_FL_FILES = [os.path.join(FL_SCRIPTS_DIR, "cadence_bridge.pyscript"), os.path.join(FL_SCRIPTS_DIR, "cadence_probe.pyscript"),
                 os.path.join(os.path.dirname(CONTROLLER_DIR), "Cadence Controller", "device_CadenceController.py")]
 OLD_FL_DIRS = [os.path.join(FL_SCRIPTS_DIR, "cadence_io"), os.path.join(os.path.dirname(CONTROLLER_DIR), "Cadence Controller")]
 

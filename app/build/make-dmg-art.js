@@ -1,17 +1,17 @@
-// Renders the Veloura-Beta.dmg window background (Deep Sable, Electric Champagne, Instrument Serif) into
+// Renders the Veloura-Beta.dmg window background (Deep Sable, Electric Champagne, Playfair Display) into
 // dmg-background.png (660x420) and dmg-background@2x.png, combined into dmg-background.tiff for Retina.
 // Run: npx electron build/make-dmg-art.js   (icon spots used by make-dmg.sh: app at 170,200 and Applications at 490,200)
 const { app, BrowserWindow } = require("electron");
 const { execFileSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
-const font = path.join(__dirname, "..", "ui", "fonts", "InstrumentSerif-Regular.ttf");
+const font = path.join(__dirname, "..", "ui", "fonts", "PlayfairDisplay.ttf");
 const html = `<!doctype html><meta charset="utf-8"><style>
 @font-face { font-family: Serif; src: url("file://${font}"); }
 html, body { margin: 0; width: 660px; height: 420px; overflow: hidden; }
-body { background: radial-gradient(420px 260px at 50% 30%, rgb(255 209 123 / .10), transparent 70%), #17181F;
+body { background: radial-gradient(420px 260px at 50% 30%, rgb(255 209 123 / .10), transparent 70%), #0B0B10;
   font-family: -apple-system, "SF Pro Text", sans-serif; color: #FFF8ED; }
-h1 { position: absolute; top: 30px; width: 100%; text-align: center; margin: 0; font: 400 40px/1 Serif; letter-spacing: .01em;
+h1 { position: absolute; top: 30px; width: 100%; text-align: center; margin: 0; font: 800 44px/1 Serif; letter-spacing: -.01em;
   background: linear-gradient(180deg, #FFF8ED 30%, #FFD17B); -webkit-background-clip: text; color: transparent; }
 .by { position: absolute; top: 76px; width: 100%; text-align: center; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: #C4B8BB; }
 svg { position: absolute; left: 262px; top: 186px; }
