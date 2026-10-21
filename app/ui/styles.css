@@ -1863,3 +1863,12 @@ body { background:
 .help ol.quick-steps { padding: 0; margin: 0; }
 .help .quick-steps li { margin: 0; }
 .pl-bar small { min-height: 2.5em; }
+/* real FL recording of the bridge menu (Setup, the bridge banner, failed-write notes) */
+.flreal { margin: 4px 0 6px; max-width: 420px; }
+.flreal video, .flreal img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line-2); background: #2b2f36; box-shadow: 0 10px 30px rgb(0 0 0 / .35); }
+.flreal figcaption { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+.flreal figcaption b { color: var(--text); font-weight: 600; }
+.flreal.small { max-width: 230px; margin: 0; }
+.flreal.small figcaption { display: none; }
+.btn.insta { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.btn.insta svg { width: 15px; height: 15px; margin: 0; }

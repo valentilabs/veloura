@@ -229,17 +229,15 @@ $("armCheck").addEventListener("click", async () => {
   if (r) toast(r.ok ? "Piano Roll link is awake ✓" : r.message, r.ok ? "ok" : "err");
 });
 
-// ---------- bridge picture (FL's Piano Roll ▸ Tools ▸ Scripts menu) ----------
+// ---------- bridge picture: a real recording of FL's Piano Roll ▸ Tools ▸ Scripts ▸ veloura_bridge (Tava's Mac, 2026-10-21) ----------
 function bridgeMock(small) {
-  const wrench = h("span", { class: "fm-tool" }, svg('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>'));
-  return h("div", { class: "flmock" + (small ? " small" : "") },
-    h("div", { class: "fm-bar" }, h("span", { class: "fm-step" }, "1"), h("span", { class: "fm-title" }, "Piano roll"), wrench, h("span", { class: "fm-hint" }, "← Tools")),
-    h("div", { class: "fm-menu" },
-      h("div", { class: "fm-col" }, ["Quick legato", "Quick chop", "Quantize", "Arpeggiate"].map((t) => h("div", { class: "fm-i dim" }, t)),
-        h("div", { class: "fm-i sel" }, h("span", { class: "fm-step" }, "2"), "Scripts ▸")),
-      h("div", { class: "fm-col" }, h("div", { class: "fm-i dim" }, "Run last script again", h("kbd", {}, "⌘⌥Y")),
-        h("div", { class: "fm-i dim" }, "Arpeggiator"), h("div", { class: "fm-i hl" }, h("span", { class: "fm-step" }, "3"), "veloura_bridge"),
-        h("div", { class: "fm-i dim" }, "Chord progression"))));
+  const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const media = calm ? h("img", { src: "brand/fl-bridge-menu.png", alt: "FL Studio Piano Roll: Tools menu, Scripts, veloura_bridge" })
+    : h("video", { src: "brand/fl-bridge-menu.webm", poster: "brand/fl-bridge-menu.png", autoplay: "", muted: "", loop: "", playsinline: "",
+      "aria-label": "FL Studio Piano Roll: click the Tools icon, then veloura_bridge under Scripts" });
+  if (media.tagName === "VIDEO") media.muted = true;
+  return h("figure", { class: "flreal" + (small ? " small" : "") }, media,
+    h("figcaption", {}, h("b", {}, "Tools"), " (the wrench in the Piano Roll) ▸ ", h("b", {}, "Scripts"), " ▸ ", h("b", {}, "veloura_bridge")));
 }
 $("armMock").replaceChildren(bridgeMock(true));
 
@@ -1359,6 +1357,7 @@ function openFeedback() {
   msg.focus();
 }
 
+const INSTAGRAM = "https://www.instagram.com/veloura.interface/";
 function renderAbout() {
   const app = (session && session.app) || {};
   $("aboutCard").replaceChildren(
@@ -1369,7 +1368,9 @@ function renderAbout() {
     h("div", { class: "row-btns" },
       h("button", { class: "btn small primary", onclick: openFeedback }, "Send feedback"),
       h("button", { class: "btn small", onclick: () => openTextPanel("License", LICENSE_TEXT) }, "License"),
-      h("button", { class: "btn small", onclick: () => openTextPanel("Privacy", PRIVACY_TEXT) }, "Privacy")));
+      h("button", { class: "btn small", onclick: () => openTextPanel("Privacy", PRIVACY_TEXT) }, "Privacy"),
+      h("a", { class: "btn small quiet insta", href: INSTAGRAM, target: "_blank", rel: "noopener" },
+        svg(["M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4z", "M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z", "M17.5 6.5h.01"]), "@veloura.interface")));
 }
 $("brandBtn").addEventListener("click", () => { showPage("help"); renderAbout(); });
 

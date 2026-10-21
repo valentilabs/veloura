@@ -477,7 +477,7 @@ function partRow(prop, r, open, toggle) {
   if (!open) return h("div", { class: "rr" + (open ? " open" : "") }, head);
   const plans = parts.map((p) => p.plan), notes = plans.reduce((t, pl) => t + ((pl && pl.notes) || []).length, 0);
   const bars = Math.max(...plans.map((pl) => (pl && pl.bars) || 0));
-  const playBtn = h("button", { class: "rr-act play-pv", type: "button", onclick: (e) => previewParts(parts, e.currentTarget) }, h("i", { class: "tri" }), "Preview");
+  const playBtn = h("button", { class: "rr-act play-pv", type: "button", onclick: (e) => previewParts(parts, e.currentTarget, prop.kit) }, h("i", { class: "tri" }), "Preview");
   let body;
   if (drums) {
     body = [h("div", { class: "rack themed" }, r.idxs.map((i) => {
@@ -516,11 +516,39 @@ async function saveProposalMidi(prop) {
 // A tiny Web Audio synth (not your FL sounds): enough to hear the rhythm and the line before adding it.
 let pvCtx = null, pvStop = null;
 function stopPreview() { if (pvStop) pvStop(); pvStop = null; }
-function previewParts(parts, btn) {
+// Drums play with the actual samples from your kit (your sound library) when Veloura picked one; melodic parts and
+// lanes without a sample use the small sketch synth (FL's plugins only sound inside FL).
+const pvBuffers = new Map();
+const laneRole = (lane) => /kick|bd\b/.test(lane) ? "kick" : /open/.test(lane) ? "open hat" : /hat|hh|shaker|ride/.test(lane) ? "hat"
+  : /clap/.test(lane) ? "clap" : /snare|rim/.test(lane) ? "snare" : /perc|tom|conga|bongo/.test(lane) ? "perc" : null;
+async function kitBuffers(ctx, kit) {
+  const out = {};
+  await Promise.all(Object.entries((kit && kit.roles) || {}).map(async ([role, sm]) => {
+    if (!sm || !sm.id || role === "808") return;
+    try {
+      if (!pvBuffers.has(sm.id)) {
+        const res = await fetch(`/api/library/audio?id=${encodeURIComponent(sm.id)}&t=${encodeURIComponent(token)}`);
+        if (!res.ok) return;
+        pvBuffers.set(sm.id, await ctx.decodeAudioData(await res.arrayBuffer()));
+      }
+      out[role] = pvBuffers.get(sm.id);
+    } catch (_) {}
+  }));
+  return out;
+}
+function previewKit() {   // the kit of the newest beat, else the kit picked on the Sounds page
+  const props = Object.values(session.proposals || {});
+  for (let i = props.length - 1; i >= 0; i--) if (props[i].kit && props[i].kit.roles) return props[i].kit;
+  return kitState && kitState.roles ? kitState : null;
+}
+async function previewParts(parts, btn, kit) {
   if (btn && btn.classList.contains("on")) { stopPreview(); return; }
   stopPreview();
   try { pvCtx = pvCtx || new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { toast("Preview isn't available here.", "err"); return; }
-  const ctx = pvCtx, master = ctx.createGain(); master.gain.value = .22; master.connect(ctx.destination);
+  const ctx = pvCtx;
+  if (ctx.state === "suspended") { try { await ctx.resume(); } catch (_) {} }
+  const samples = parts.some((p) => p.role === "drums") ? await kitBuffers(ctx, kit || previewKit()) : {};
+  const master = ctx.createGain(); master.gain.value = .22; master.connect(ctx.destination);
   const tempo = ((parts[0] || {}).plan || {}).tempo_bpm || (session.settings.tempo_bpm || 140), spb = 60 / tempo, t0 = ctx.currentTime + .06;
   let end = 0;
   const noise = (() => { const b = ctx.createBuffer(1, ctx.sampleRate * .5, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
@@ -530,7 +558,12 @@ function previewParts(parts, btn) {
     for (const n of plan.notes || []) {
       const at = t0 + n.start * spb, vel = (n.velocity || 100) / 127, dur = Math.max(.08, n.length * spb);
       end = Math.max(end, n.start * spb + dur);
-      if (part.role === "drums") {
+      const buf = part.role === "drums" ? samples[laneRole(lane)] : null;
+      if (buf) {
+        const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = buf;
+        g.gain.value = vel * 2.6; src.connect(g).connect(master); src.start(at);
+        end = Math.max(end, n.start * spb + Math.min(buf.duration, 1.2));
+      } else if (part.role === "drums") {
         if (/kick/.test(lane)) {
           const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(130, at); o.frequency.exponentialRampToValueAtTime(42, at + .18);
           env(g, at, vel, .3); o.connect(g).connect(master); o.start(at); o.stop(at + .32);
@@ -835,7 +868,7 @@ function beatRow(n, e) {
   const color = ROLE_COLOR[e.role] || ROLE_COLOR.other, sync = syncState(n, e), versions = e.versions || [];
   const locked = (session.settings.locked_parts || []).includes(n);
   const strip = e.mode === "steps" || e.role === "drums" ? drumStrip([e.plan], color) : notesStrip(planNotes(e.plan), color);
-  const pv = h("button", { class: "bp-play", type: "button", title: "Preview (a quick sketch, not your FL sounds)", "data-label": "Play", onclick: (ev) => previewParts([{ ...e, name: n }], ev.currentTarget) }, "Play");
+  const pv = h("button", { class: "bp-play", type: "button", title: "Preview: drums use your kit samples, other parts a quick sketch", "data-label": "Play", onclick: (ev) => previewParts([{ ...e, name: n }], ev.currentTarget) }, "Play");
   return h("div", { class: "bp-row" + (locked ? " locked" : ""), style: `--gc:${color}` },
     h("i", { class: "bp-dot" }),
     h("span", { class: "bp-name" }, h("b", {}, n, locked ? h("small", { class: "lock" }, " · kept") : null), h("small", {}, "→ " + (e.sound || e.channel_name || "Piano Roll"))),
