@@ -13,6 +13,7 @@ Uses only the standard library (Python 3.9).
 """
 
 import base64
+import http.client
 import hashlib
 import json
 import os
@@ -44,7 +45,7 @@ KEYCHAIN_SERVICE = "Veloura ChatGPT sign-in"
 KEYCHAIN_ACCOUNT = "veloura"
 USAGE_URL = "https://chatgpt.com/settings/usage"
 REASONING_EFFORT = None   # None: the model's default. "low" | "medium" | "high" are accepted on the plan route (2026-10-20)
-USER_AGENT = "VelouraBeta/0.9.0 (Macintosh; macOS)"   # Cloudflare in front of OpenAI can refuse Python's default agent
+USER_AGENT = "VelouraBeta/0.9.1 (Macintosh; macOS)"   # Cloudflare in front of OpenAI can refuse Python's default agent
 
 
 class ChatGPTError(RuntimeError):
@@ -561,6 +562,15 @@ def generate(instructions, user_message, schema, model=None, store=None, post=_p
                 sleep(RETRY_WAITS[attempt])   # e.g. response.failed "Our servers are currently overloaded"
                 continue
             raise
-        except (urllib.error.URLError, socket.timeout) as e:
+        except (urllib.error.URLError, socket.timeout, TimeoutError) as e:
+            if isinstance(e, (socket.timeout, TimeoutError)) or isinstance(getattr(e, "reason", None), (socket.timeout, TimeoutError)):
+                raise ChatGPTError("ChatGPT took too long to answer. Try again, or ask for fewer parts.", code="timeout")
             raise ChatGPTError("Could not reach ChatGPT: %s" % getattr(e, "reason", e))
+        except (OSError, http.client.HTTPException) as e:
+            # the connection dropped mid-answer (Wi-Fi blip, sleep, proxy reset): one quiet retry, then a clear message
+            if attempt < 1:
+                sleep(RETRY_WAITS[0])
+                continue
+            raise ChatGPTError("The connection to ChatGPT dropped before the answer finished. Check your internet and try again.",
+                               code="connection")
     raise ChatGPTError("ChatGPT couldn't answer right now. Try again in a minute.")

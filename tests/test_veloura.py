@@ -315,8 +315,15 @@ class SimulatedBridgeTests(unittest.TestCase):
         self.assertEqual(bp.find_result(rep2["id"])["status"], "refused")
         self.assertEqual(fake_flpianoroll.score.noteCount, 16)
 
-    def test_second_pending_command_blocked(self):
-        bp.send_command(bp.make_snapshot_command())
+    def test_stale_unstarted_command_is_withdrawn_not_blocking(self):
+        old = bp.send_command(bp.make_snapshot_command())
+        new = bp.send_command(bp.make_snapshot_command())
+        self.assertEqual(bp.pending_command()["id"], new["id"])
+        self.assertNotEqual(old["id"], new["id"])
+
+    def test_command_fl_is_running_still_blocks(self):
+        cmd = bp.send_command(bp.make_snapshot_command())
+        open(bp._b("started-%s.marker" % cmd["id"]), "w").close()
         with self.assertRaises(bp.BridgeError):
             bp.send_command(bp.make_snapshot_command())
 

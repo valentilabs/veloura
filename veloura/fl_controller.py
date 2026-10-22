@@ -195,7 +195,12 @@ class ControllerLink:
 
     def _ensure(self):
         if self.transport is None:
-            t = self.transport_factory()
+            try:
+                t = self.transport_factory()
+            except ControllerUnavailable:
+                raise
+            except Exception as e:   # rtmidi/CoreMIDI errors: report as "not connected" so the app keeps working
+                raise ControllerUnavailable("Couldn't open Veloura's MIDI ports (%s). Quit and reopen Veloura." % e)
             t.on_frame = self._on_frame
             self.transport = t
 
@@ -224,8 +229,11 @@ class ControllerLink:
             with self.cond:
                 self.pending[req_id] = {"chunks": {}, "total": None, "result": None}
             try:
-                for f in frames_for(req_id, {"protocol": PROTOCOL, "op": op, "params": params or {}}):
-                    self.transport.send(f)
+                try:
+                    for f in frames_for(req_id, {"protocol": PROTOCOL, "op": op, "params": params or {}}):
+                        self.transport.send(f)
+                except Exception as e:   # a MIDI driver error must read as "not connected", never crash a request
+                    raise ControllerUnavailable("Couldn't send to FL over MIDI (%s). %s" % (e, RECONNECT_TEXT))
                 deadline = time.time() + timeout
                 with self.cond:
                     while self.pending[req_id]["result"] is None:

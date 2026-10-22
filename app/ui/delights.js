@@ -23,14 +23,7 @@
   }
   window.vlBurst = burst;
 
-  // 1. The Studio eyebrow follows the time of day.
-  function sessionName() {
-    const hr = new Date().getHours();
-    return hr < 5 ? "Late-night session" : hr < 12 ? "Morning session" : hr < 18 ? "Afternoon session" : "Evening session";
-  }
-  const eyebrow = document.querySelector("#heroTitle .eyebrow");
-  const setEyebrow = () => { if (eyebrow) eyebrow.textContent = "Veloura · " + sessionName(); };
-  setEyebrow(); setInterval(setEyebrow, 10 * 60 * 1000);
+  // 1. (The Studio eyebrow is set by workspace.js heroEyebrow: time of day plus session context.)
 
   // 2. Click the logo five times quickly: a burst and a small note from the people who made it.
   const brand = document.getElementById("brandBtn");

@@ -9,7 +9,7 @@ others) and makes Opus the default Claude model. Customers get none of that.
 
 import os
 
-VERSION = "0.9.0"
+VERSION = "0.9.1"
 CHANNEL = "beta"
 DEV_FLAG_FILE = os.path.expanduser("~/Library/Application Support/Veloura/dev_mode")
 OLD_DEV_FLAG_FILE = os.path.expanduser("~/Library/Application Support/Cadence/dev_mode")   # before the rename (2026-10-21)

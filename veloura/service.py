@@ -128,9 +128,21 @@ def make_handler(engine, token, port_ref):
                 return self._json(400, {"error": str(e)})
             except (ValueError, RuntimeError) as e:
                 return self._json(400, {"error": str(e)})
+            except subprocess.TimeoutExpired:
+                traceback.print_exc()
+                return self._json(400, {"error": "macOS took too long to answer (System Events can get stuck). Nothing was "
+                                                 "changed. Try again; if it keeps happening, restart FL Studio and Veloura."})
+            except OSError as e:
+                traceback.print_exc()
+                return self._json(400, {"error": "Veloura couldn't reach a file or app it needs (%s). Try again." % (e.strerror or e)})
             except Exception as e:
                 traceback.print_exc()
-                return self._json(500, {"error": "internal error: %r" % (e,)})
+                try:
+                    engine.event("error", "Unexpected error on %s: %r" % (path, e))
+                except Exception:
+                    pass
+                return self._json(500, {"error": "Something went wrong, and nothing was changed. Try again; if it keeps "
+                                                 "happening, send feedback from Help (the details are in the Activity log)."})
 
         def _audio(self, sample):
             """Stream one library sound for preview (only files that are in the user's indexed library)."""

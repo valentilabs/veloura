@@ -81,6 +81,20 @@ const MI = { // menu icons
   chev: ["M6 9l6 6 6-6"],
 };
 
+// ---------- themes (Settings ▸ Theme; saved with the other settings so it survives restarts and updates) ----------
+// The colours live in styles.css under html[data-skin=…]; these are the names and the swatch for the picker.
+const THEMES = [
+  { id: "champagne", name: "Electric Champagne", note: "Default · matches the website", sw: ["#FFE7AE", "#FFCC6A", "#F7BD4F"], bg: "#0E0F14" },
+  { id: "rose-gold", name: "Rose Gold", note: "Warm blush metal", sw: ["#FBD5C6", "#F2AE96", "#E59A80"], bg: "#0E0B0C" },
+  { id: "platinum", name: "Platinum", note: "Quiet and silver", sw: ["#FAF8F4", "#E2DED6", "#CBC6BC"], bg: "#0A0A0C" },
+  { id: "lilac", name: "Lilac", note: "Soft violet", sw: ["#E4D9FF", "#C9B3FF", "#B49AF7"], bg: "#0B0A10" },
+  { id: "amber-noir", name: "Amber Noir", note: "Deep orange glow", sw: ["#FFCB91", "#FFA94D", "#F28F2C"], bg: "#0C0A08" },
+];
+function applyTheme(id) {
+  const t = THEMES.find((x) => x.id === id) || THEMES[0];
+  document.documentElement.dataset.skin = t.id;
+}
+
 // ---------- navigation ----------
 function showPage(name) {
   page = name;
@@ -153,17 +167,25 @@ function renderStatus() {
   $("setupBadge").hidden = !(!status.fl_running || !status.accessibility || !scriptsOk(status) || !(status.controller || {}).connected);
   $("armBanner").hidden = !(status.fl_running && status.accessibility && !status.armed);
   renderConnBanner();
-  $("projectChip").textContent = status.project ? "♪ " + status.project : "";
-  $("projectChip").hidden = !status.project;
-  const pv = (status.providers || {})[status.provider] || {};
-  $("providerPill").textContent = providerName(status.provider) + (pv.available ? "" : " · not connected");
+  for (const c of document.querySelectorAll("[data-proj]")) { c.textContent = status.project || ""; c.hidden = !status.project; }
   renderModelLabel();
-  const ctl = status.controller || {};
-  $("flInfo").replaceChildren(...(status.fl_running
-    ? [h("span", { class: "dot " + (ctl.connected ? "ok" : "warn") }), ctl.connected ? `FL · pattern ${(ctl.pattern || {}).number || "?"} · ${ctl.tempo} BPM` : "FL open"]
-    : [h("span", { class: "dot bad" }), "FL closed"]));
+  const fl = flState(status);
+  for (const p of document.querySelectorAll("[data-flpill]")) {
+    p.className = "fl-pill " + fl.cls; p.title = fl.tip;
+    p.replaceChildren(h("i", { class: "dot " + fl.cls }), "FL Studio · " + fl.text);
+  }
 }
-$("providerPill").addEventListener("click", () => showPage("settings"));
+// The one FL status the top bar shows on every page. Click it for Setup.
+function flState(st) {
+  const ctl = st.controller || {};
+  if (!st.fl_running) return { cls: "bad", text: "closed", tip: "Open Veloura first, then FL Studio" };
+  if (!st.accessibility || !scriptsOk(st)) return { cls: "warn", text: "finish setup", tip: "A setup step is missing. Click for Setup." };
+  if (!ctl.connected) return { cls: "warn", text: "not linked", tip: "The FL controller isn't connected (Setup step 3)" };
+  if (!st.armed) return { cls: "warn", text: "link the bridge", tip: "Open a Piano Roll ▸ Tools ▸ Scripts ▸ veloura_bridge" };
+  return { cls: "ok", text: "connected", tip: `Pattern ${(ctl.pattern || {}).number || "?"} · ${ctl.tempo} BPM` };
+}
+for (const p of document.querySelectorAll("[data-flpill]")) p.addEventListener("click", () => showPage("setup"));
+for (const c of document.querySelectorAll("[data-proj]")) if (c.id !== "projectChip") c.addEventListener("click", () => openProjects());
 // The model button next to Send: with a Claude provider it shows the model and opens a menu to switch it (the same
 // saved setting as the Settings picker); with any other provider it shows the provider and opens Settings.
 const CLAUDE_PROVIDERS = ["anthropic", "claude-code"];
@@ -207,36 +229,48 @@ $("armCheck").addEventListener("click", async () => {
   if (r) toast(r.ok ? "Piano Roll link is awake ✓" : r.message, r.ok ? "ok" : "err");
 });
 
-// ---------- bridge picture (FL's Piano Roll ▸ Tools ▸ Scripts menu) ----------
+// ---------- bridge picture: a real recording of FL's Piano Roll ▸ Tools ▸ Scripts ▸ veloura_bridge (Tava's Mac, 2026-10-21) ----------
 function bridgeMock(small) {
-  const wrench = h("span", { class: "fm-tool" }, svg('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>'));
-  return h("div", { class: "flmock" + (small ? " small" : "") },
-    h("div", { class: "fm-bar" }, h("span", { class: "fm-step" }, "1"), h("span", { class: "fm-title" }, "Piano roll"), wrench, h("span", { class: "fm-hint" }, "← Tools")),
-    h("div", { class: "fm-menu" },
-      h("div", { class: "fm-col" }, ["Quick legato", "Quick chop", "Quantize", "Arpeggiate"].map((t) => h("div", { class: "fm-i dim" }, t)),
-        h("div", { class: "fm-i sel" }, h("span", { class: "fm-step" }, "2"), "Scripts ▸")),
-      h("div", { class: "fm-col" }, h("div", { class: "fm-i dim" }, "Run last script again", h("kbd", {}, "⌘⌥Y")),
-        h("div", { class: "fm-i dim" }, "Arpeggiator"), h("div", { class: "fm-i hl" }, h("span", { class: "fm-step" }, "3"), "veloura_bridge"),
-        h("div", { class: "fm-i dim" }, "Chord progression"))));
+  const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const media = calm ? h("img", { src: "brand/fl-bridge-menu.png", alt: "FL Studio Piano Roll: Tools menu, Scripts, veloura_bridge" })
+    : h("video", { src: "brand/fl-bridge-menu.webm", poster: "brand/fl-bridge-menu.png", autoplay: "", muted: "", loop: "", playsinline: "",
+      "aria-label": "FL Studio Piano Roll: click the Tools icon, then veloura_bridge under Scripts" });
+  if (media.tagName === "VIDEO") media.muted = true;
+  return h("figure", { class: "flreal" + (small ? " small" : "") }, media,
+    h("figcaption", {}, h("b", {}, "Tools"), " (the wrench in the Piano Roll) ▸ ", h("b", {}, "Scripts"), " ▸ ", h("b", {}, "veloura_bridge")));
 }
 $("armMock").replaceChildren(bridgeMock(true));
 
-// ---------- Veloura Channel Rack (mirror of FL's, click to edit) ----------
-let rack = null, rackPats = null, rackBars = {}, rackOpen = store.get("rackOpen", true), rackHold = 0, paint = null, rackShowEmpty = false;
+// ---------- Veloura Channel Rack: a small mirror of FL's current pattern, click a step to change it in FL ----------
+// Hidden until the first prompt in a project; after that it shows unless the user hides it (rackOpen).
+let rack = null, rackPats = null, rackBars = {}, rackOpen = true, rackHold = 0, paint = null;
 let rackQueue = Promise.resolve();
-function setRackOpen(v) { rackOpen = v; store.set("rackOpen", v); $("page-studio").classList.toggle("norack", !v); $("rackToggle").classList.toggle("on", v); if (v) refreshRack(); }
-$("rackToggle").addEventListener("click", () => setRackOpen(!rackOpen));
+const rackWanted = () => rackOpen && !!(session && session.messages.length);
+function setRackOpen(v) {
+  rackOpen = v;
+  if (session && session.settings.rack_open !== v) api("/api/settings", { rack_open: v }).catch(() => {});
+  if (session) session.settings.rack_open = v;
+  applyRackVisibility();
+  if (v) refreshRack();
+}
+function applyRackVisibility() {
+  const on = rackWanted();
+  $("page-studio").classList.toggle("norack", !on);
+  $("rackToggle").classList.toggle("on", on);
+}
+$("rackToggle").addEventListener("click", () => setRackOpen(!rackWanted()));
+$("rackClose").addEventListener("click", () => setRackOpen(false));
 async function refreshRack() {
   // pending: Veloura is in the middle of an FL action; reading every pattern now would queue behind it on the
   // same MIDI link and slow it down
-  if (page !== "studio" || !rackOpen || rackHold || paint || pending || document.hidden || !$("pop").hidden) return;
+  if (page !== "studio" || !rackWanted() || rackHold || paint || pending || document.hidden || !$("pop").hidden) return;
   try {
     const r = await api("/api/rack", { all: true });
     if (rackHold || paint) return;
     rack = r;
     if (r.patterns) rackPats = r.patterns;          // FL playing: keep the last full read, refresh the current pattern only
     else if (rackPats && r.pattern) rackPats = rackPats.map((p) => p.number === r.pattern.number ? { ...p, steps: r.channels.map((c) => c.steps) } : p);
-    if (changed("rack", [rack, rackPats, rackBars, rackShowEmpty])) renderRack();
+    if (changed("rack", [rack, rackPats, rackBars])) renderRack();
   } catch (_) {}
 }
 const flColor = (c) => "#" + ((c || 0x5f6a73) & 0xffffff).toString(16).padStart(6, "0");
@@ -250,59 +284,65 @@ function rackClick(ch, pat, step, on, el) {
     .finally(() => { rackHold--; });
 }
 window.addEventListener("pointerup", () => { if (paint) { paint = null; } });
-function rackSection(pat, current) {
+const isPluginCh = (ch) => ch.type === "plugin" || ch.type === "hybrid";
+async function rackMute(ch) {
+  rackHold++;
+  try { const r = await api("/api/rack/mute", { index: ch.index, name: ch.name, muted: !ch.muted }); ch.muted = r.muted; renderRack(); }
+  catch (e) { toast(e.message, "err"); } finally { rackHold--; }
+}
+// A colour for an instrument row: the part Veloura wrote on it, else FL's channel colour.
+function chanTint(ch) {
+  const e = Object.values((session && session.parts) || {}).find((p) => p.channel_name === ch.name);
+  return e ? (ROLE_COLOR[e.role] || ROLE_COLOR.other) : flColor(ch.color);
+}
+function renderRack() {
+  const body = $("rackBody");
+  applyRackVisibility();
+  if (!rack || !rack.connected) {
+    $("rackPat").textContent = ""; $("rackPat").hidden = true; $("rackBars").textContent = "";
+    body.replaceChildren(h("div", { class: "rp-empty" }, unpluggedScene(96), h("b", {}, "Not connected"),
+      h("span", {}, "Connect the FL controller to see your Channel Rack here."),
+      h("button", { class: "link-quiet", type: "button", onclick: () => showPage("setup") }, "Open Setup")));
+    $("rackFoot").replaceChildren(); return;
+  }
+  const cur = rack.pattern ? rack.pattern.number : 1;
+  const pats = (rackPats && rackPats.length) ? rackPats : [{ ...rack.pattern, length: rack.length, steps: rack.channels.map((c) => c.steps) }];
+  const pat = pats.find((p) => p.number === cur) || pats[0];
   const bars = Math.max(1, Math.ceil((pat.length || 16) / 16));
   const bar = Math.min(rackBars[pat.number] || 0, bars - 1);
-  const rows = rack.channels.map((ch) => {
-    const set = new Set(pat.steps[ch.index] || []), plugin = ch.type === "plugin" || ch.type === "hybrid";
-    const steps = Array.from({ length: 16 }, (_, i) => {
+  $("rackPat").hidden = false;
+  $("rackPat").textContent = pat.name || "Pattern " + pat.number;
+  $("rackBars").replaceChildren(...(bars > 1 ? Array.from({ length: bars }, (_, b) => h("button", { class: "rp-bar" + (b === bar ? " sel" : ""), type: "button",
+    title: `Bar ${b + 1}`, onclick: () => { rackBars[pat.number] = b; renderRack(); } }, String(b + 1))) : [`${pat.length || 16} steps`]));
+  const steps = rack.channels.filter((ch) => !isPluginCh(ch)), inst = rack.channels.filter(isPluginCh);
+  const rows = steps.map((ch) => {
+    const set = new Set(pat.steps[ch.index] || []);
+    const cells = Array.from({ length: 16 }, (_, i) => {
       const st = bar * 16 + i;
-      const el = h("button", { class: "st" + (Math.floor(i / 4) % 2 ? " alt" : "") + (set.has(st) ? " on" : ""), "aria-label": `${pat.name} ${ch.name} step ${st + 1}` });
+      const el = h("button", { class: "st" + (Math.floor(i / 4) % 2 ? " alt" : "") + (set.has(st) ? " on" : ""), type: "button", "aria-label": `${ch.name} step ${st + 1}` });
       el.addEventListener("pointerdown", (e) => { e.preventDefault(); paint = { key: pat.number + ":" + ch.index, on: !el.classList.contains("on") }; rackClick(ch, pat, st, paint.on, el); });
       el.addEventListener("pointerenter", () => { if (paint && paint.key === pat.number + ":" + ch.index && el.classList.contains("on") !== paint.on) rackClick(ch, pat, st, paint.on, el); });
       return el;
     });
     return h("div", { class: "rp-row" + (ch.muted ? " muted" : "") },
-      h("button", { class: "rp-led" + (ch.muted ? "" : " on"), title: ch.muted ? "Unmute" : "Mute", onclick: async () => {
-        rackHold++; try { const r = await api("/api/rack/mute", { index: ch.index, name: ch.name, muted: !ch.muted }); ch.muted = r.muted; renderRack(); }
-        catch (e) { toast(e.message, "err"); } finally { rackHold--; } } }),
-      h("button", { class: "rp-name" + (plugin ? " plugin" : ""), style: `--chc:${flColor(ch.color)}`, title: plugin ? "Choose a sound for " + ch.name : ch.name,
-        onclick: (e) => plugin ? openSounds(e.currentTarget, ch) : null }, h("span", {}, ch.name), plugin ? svg('<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/>') : null),
-      h("div", { class: "rp-steps" }, steps));
+      h("button", { class: "rp-name", type: "button", title: ch.muted ? `${ch.name} (muted) · click to unmute` : `${ch.name} · click to mute`, onclick: () => rackMute(ch) }, ch.name),
+      h("div", { class: "rp-steps" }, cells));
   });
-  return h("section", { class: "rp-pattern" + (current ? " current" : "") },
-    h("div", { class: "rp-phead" },
-      h("button", { class: "rp-pname", title: current ? "This pattern is selected in FL" : "Select this pattern in FL", onclick: async () => {
-        if (current) return;
-        try { await api("/api/rack/pattern", { number: pat.number }); rackHold = 0; refreshRack(); } catch (e) { toast(e.message, "err"); } } },
-        h("span", { class: "rp-dot" }), pat.name || "Pattern " + pat.number),
-      current ? h("span", { class: "rp-badge" }, "in FL") : null,
-      h("span", { class: "spacer" }),
-      bars > 1 ? h("div", { class: "rp-bars" }, Array.from({ length: bars }, (_, b) => h("button", { class: "rp-bar" + (b === bar ? " sel" : ""),
-        onclick: () => { rackBars[pat.number] = b; renderRack(); } }, String(b + 1)))) : null),
-    h("div", { class: "rp-grid" }, rows));
+  body.replaceChildren(h("div", { class: "rp-grid" }, rows.length ? rows : h("span", { class: "rp-none" }, "No drum channels yet")),
+    inst.length ? h("div", { class: "rp-sep" }) : null,
+    inst.length ? h("div", { class: "rp-inst" }, inst.map((ch) => h("button", { class: "rp-irow" + (ch.muted ? " muted" : ""), type: "button", title: "Choose a sound for " + ch.name,
+      onclick: (e) => openSounds(e.currentTarget, ch) },
+      h("i", { style: `background:${chanTint(ch)}` }), h("span", {}, ch.name), h("small", {}, ch.muted ? "Muted" : "Ready")))) : null);
+  $("rackFoot").replaceChildren();
 }
-function renderRack() {
-  const body = $("rackBody");
-  $("page-studio").classList.toggle("norack", !rackOpen);
-  if (!rack || !rack.connected) {
-    $("rackPat").textContent = ""; $("rackBars").replaceChildren();
-    body.replaceChildren(h("div", { class: "rp-empty" }, unpluggedScene(170), h("b", {}, "Not connected"), h("span", {}, "Connect the FL controller (Setup step 3) to see and edit your Channel Rack here."),
-      h("button", { class: "btn small", onclick: () => showPage("setup") }, "Open Setup")));
-    $("rackFoot").textContent = ""; return;
-  }
-  const cur = rack.pattern ? rack.pattern.number : 1;
-  const pats = (rackPats && rackPats.length) ? rackPats : [{ ...rack.pattern, length: rack.length, steps: rack.channels.map((c) => c.steps) }];
-  const used = (p) => p.steps.some((st) => st && st.length);
-  const shown = pats.filter((p) => p.number === cur || used(p) || rackShowEmpty);
-  const hidden = pats.length - shown.length;
-  $("rackPat").textContent = `${pats.length} pattern${pats.length === 1 ? "" : "s"}`;
-  $("rackBars").replaceChildren();
-  body.replaceChildren(...shown.map((p) => rackSection(p, p.number === cur)));
-  $("rackFoot").replaceChildren(...[h("span", {}, "Click or drag steps · synced with FL"),
-    hidden || rackShowEmpty ? h("button", { class: "link", onclick: () => { rackShowEmpty = !rackShowEmpty; renderRack(); } },
-      rackShowEmpty ? "Hide empty patterns" : `Show ${hidden} empty`) : null].filter(Boolean));
-}
+$("rackPat").addEventListener("click", (e) => {
+  const pats = rackPats || [];
+  if (pats.length < 2) return;
+  const cur = rack && rack.pattern ? rack.pattern.number : 1;
+  openPop(e.currentTarget, [h("h3", {}, "Patterns"), h("div", { class: "opt-list" }, pats.map((p) => h("button", { class: "opt" + (p.number === cur ? " sel" : ""), type: "button",
+    onclick: async () => { closePops(); if (p.number === cur) return; try { await api("/api/rack/pattern", { number: p.number }); rackHold = 0; refreshRack(); } catch (err) { toast(err.message, "err"); } } },
+    p.name || "Pattern " + p.number, p.steps.some((x) => x && x.length) ? h("span", { class: "k" }, "has steps") : null)))], 240);
+});
 async function openSounds(anchor, ch) {
   openPop(anchor, [h("h3", {}, ch.name), h("p", { class: "pop-sub" }, "Loading sounds…")], 320);
   let info;
@@ -349,6 +389,11 @@ $("plusBtn").addEventListener("click", (e) => {
     item("sample", "Add a sample", "Build a beat around a loop", () => pickFile("sample")),
     item("song", "Add an inspiration song", "Make something that feels like it", () => pickFile("inspiration")),
     item("genre", "Make a genre beat", "Trap, plugg, rage, jerk, drill…", () => openGenre($("plusBtn"), true)),
+    h("hr"),
+    item("clock", "Tempo", `${session.settings.tempo_bpm} BPM`, () => openTempo($("plusBtn"))),
+    item("key", "Key", session.settings.key_auto ? "Auto" : session.settings.key, () => openKey($("plusBtn"))),
+    item("roll", "Loop length", session.settings.bars_auto ? "Auto" : session.settings.bars + " bars", () => openBars($("plusBtn"))),
+    item("bars", "Feel", "Simple or complex, sparse or full…", () => openFeel($("plusBtn"))),
     h("hr"),
     item("prep", "Sound prep checklist", "Loop points off · Cut itself on 808s", () => openPrep($("plusBtn")), prep && prep.pending ? String(prep.pending) : null),
     item("check", "Check for sound after stop", "Finds channels that keep ringing", soundCheck),
@@ -446,17 +491,27 @@ function renderModeChip() {
 }
 
 // ---------- pills under the composer ----------
-function pill(icon, label, value, onclick) {
-  return h("button", { class: "pillbtn", type: "button", onclick }, svg(MI[icon]), h("span", { class: "k" }, label), h("b", {}, value), svg(MI.chev));
+// Tempo, key, bars, genre and sounds live inside the prompt box as small tokens (the + menu has them too).
+function pill(label, value, onclick, title) {
+  return h("button", { class: "token", type: "button", title, onclick }, h("span", {}, label), h("b", {}, value));
 }
 function renderPills() {
   const s = session.settings, g = genreInfo[s.genre] || {}, ctl = (status && status.controller) || {};
   $("pills").replaceChildren(
-    pill("clock", "BPM", String(s.tempo_bpm), (e) => openTempo(e.currentTarget)),
-    pill("key", "Key", s.key_auto ? `Auto${g.key ? " · " + g.key : ""}` : s.key, (e) => openKey(e.currentTarget)),
-    pill("bars", "Bars", s.bars_auto ? `Auto${g.bars ? " · " + g.bars : ""}` : String(s.bars), (e) => openBars(e.currentTarget)),
-    pill("genre", "Genre", g.label || s.genre, (e) => openGenre(e.currentTarget, false)),
-    pill("rack", "Sounds", ctl.connected ? String((ctl.channels || []).length) : "–", (e) => openRack(e.currentTarget)));
+    pill("BPM", String(s.tempo_bpm), (e) => openTempo(e.currentTarget), "Tempo"),
+    pill("Key", s.key_auto ? "Auto" : s.key, (e) => openKey(e.currentTarget), s.key_auto && g.key ? `Auto: ${g.key} suits ${g.label}` : "Key"),
+    pill("Bars", s.bars_auto ? (g.bars ? String(g.bars) : "Auto") : String(s.bars), (e) => openBars(e.currentTarget), s.bars_auto ? "Auto length" : "Loop length"),
+    pill("Genre", g.label || s.genre, (e) => openGenre(e.currentTarget, false), "Genre"),
+    pill("Sounds", ctl.connected ? "My rack" : "–", (e) => openRack(e.currentTarget), ctl.connected ? `${(ctl.channels || []).length} channels in your Channel Rack` : "Connect FL to use your sounds"));
+}
+// Feel sliders (simple ↔ complex, sparse ↔ full…), saved for every beat.
+function openFeel(anchor) {
+  const feel = Object.assign({}, FEEL_DEFAULT, session.settings.feel || {});
+  openPop(anchor, [h("h3", {}, "Feel"), h("p", { class: "pop-sub" }, "Nudges every beat Veloura writes. Middle is balanced."),
+    h("div", { class: "feel-grid" }, FEEL.map(([k, lo, hi]) => h("label", { class: "feel-row" }, h("span", {}, lo),
+      h("input", { type: "range", min: 0, max: 100, value: feel[k], oninput: (e) => { feel[k] = +e.target.value; saveFeel(feel); } }), h("span", {}, hi)))),
+    h("div", { class: "row-btns end" }, h("button", { class: "btn small", type: "button", onclick: () => { Object.assign(feel, FEEL_DEFAULT); saveFeel(feel); closePops(); } }, "Reset"),
+      h("button", { class: "btn small primary", type: "button", onclick: closePops }, "Done"))], 360);
 }
 let tempoTimer = null;
 function setTempo(v) {
@@ -550,13 +605,14 @@ function renderPrepBanner() {
 
 // ---------- chat ----------
 const MODE_NAME = { describe: "", genre: "Genre", sample: "Sample", inspiration: "Inspiration" };
-const REVISE_CHIPS = ["Make it darker", "Mix it: punchier drums, 808 sits under", "Less repetitive"];
-const START_CHIPS = ["Dark plugg beat with bouncy drums", "Rage beat using my whole kit", "Sad melodic trap, piano and 808"];
 function renderChat() {
   const chat = $("chat"), sc = $("chatScroll");
   const stick = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 80;
-  $("page-studio").classList.toggle("fresh", !session.messages.length);
-  if (!session.messages.length) { chat.replaceChildren(); return; }
+  const fresh = !session.messages.length;
+  $("page-studio").classList.toggle("fresh", fresh);
+  if (!fresh) $("input").placeholder = "Ask for a change…";
+  else if ($("input").placeholder === "Ask for a change…") $("input").placeholder = "What are we making tonight?";
+  if (fresh) { chat.replaceChildren(); return; }
   chat.replaceChildren(...session.messages.map((m) => {
     if (m.role === "user") return h("div", { class: "msg-user" },
       m.attachment ? h("div", { class: "msg-attach" }, svg(ICONS.melody), m.attachment.name, h("span", {}, m.attachment.mode === "sample" ? " · Sample" : " · Inspiration")) : null, m.text);
@@ -565,16 +621,18 @@ function renderChat() {
     const otherIdx = prop ? prop.parts.map((p, i) => i).filter((i) => !isDrumPart(prop.parts[i])) : [];
     const open = prop ? prop.parts.filter((p) => p.status !== "applied") : [];
     const ref = prop && prop.reference_id && session.references ? session.references[prop.reference_id] : null;
-    return h("div", { class: "msg-ai" }, h("span", { class: "avatar" }, h("i"), h("i"), h("i")),
+    const special = prop && ["improve", "variations"].includes(prop.kind);
+    return h("div", { class: "msg-ai" }, h("span", { class: "avatar" }, h("i"), h("i"), h("i"), h("i")),
       h("div", { class: "ai-body" },
         h("div", { class: "ai-text" + (m.error ? " error" : "") + (m.cancelled ? " cancelled" : "") }, m.text || "Here's a draft."),
         h("div", { class: "meta" }, providerName(m.provider) + (prop && MODE_NAME[prop.mode] ? " · " + MODE_NAME[prop.mode] + (ref ? " (" + ref.name + ")" : "") : "") + (m.time ? " · " + m.time.slice(11, 16) : "")),
         prop && prop.problems && prop.problems.length ? h("div", { class: "problems" }, prop.problems.map((p) => h("div", {}, "⚠ " + p))) : null,
-        prop ? proposalHeader(prop) : null,
+        special ? proposalHeader(prop) : null,
         prop && prop.kind === "improve" ? improveCards(prop) : null,
         prop && prop.kind === "variations" ? variationCards(prop) : null,
-        prop && !["improve", "variations"].includes(prop.kind) ? orderedProposal(prop, m) : null,
-        prop && ["improve", "variations"].includes(prop.kind) && prop.mix ? mixCard(prop) : null));
+        prop && !special && prop.parts.length ? resultCard(prop, m) : null,
+        prop && !special && !prop.parts.length ? orderedProposal(prop, m) : null,
+        special && prop.mix ? mixCard(prop) : null));
   }));
   if (stick) sc.scrollTop = sc.scrollHeight;
 }
@@ -598,9 +656,12 @@ function mixCard(prop) {
           if (r) toast(r.ok ? "Mix undone ✓" : "Undo only partly worked", r.ok ? "ok" : "err"); } }, "Undo mix")));
 }
 
+// Fresh Studio: 3 short ideas (rotating per session, leaning to the genres this person makes). After a reply:
+// 4 follow-ups that fit what was just written. Each chip shows a short label and sends a fuller request.
 function renderChips() {
-  const list = session.messages.length && Object.keys(session.parts).length ? REVISE_CHIPS : START_CHIPS;
-  $("chips").replaceChildren(...list.slice(0, 3).map((c) => h("button", { class: "chip", type: "button", onclick: () => send(c) }, c)));
+  const fresh = !session.messages.length;
+  $("chips").replaceChildren(...(fresh ? startIdeas() : []).map(([label, text]) => h("button", { class: "chip", type: "button", onclick: () => send(text) }, label)));
+  $("followChips").replaceChildren(...(fresh ? [] : followUps()).map(([label, text]) => h("button", { class: "chip", type: "button", disabled: pending > 0, onclick: () => send(text) }, label)));
 }
 function defaultPrompt() {
   const ref = currentRef(), g = (genreInfo[session.settings.genre] || {}).label || session.settings.genre;
@@ -861,11 +922,13 @@ async function addAllInner(prop, only) {
     const r = await applyPart(fresh, i);
     if (cancelRequested) { toast("Stopped. Parts already added stay in FL.", ""); return; }
     if (!r || !r.ok) failed.push(part.name);
+    // FL isn't answering at all: stop here instead of waiting it out once per part
+    if (!r || r.code === "no_result") { const rest = order.slice(order.indexOf(i) + 1).map((j) => fresh.parts[j].name); failed.push(...rest); break; }
   }
   if (session.settings.auto_mixer !== false) { try { const m = await api("/api/mixer-setup", {}); if (m.routed && m.routed.length) toast(`Gave ${m.routed.length} channel(s) their own mixer track`, "ok"); } catch (_) {} }
   await refreshSession();
   if (!skipped.length && !failed.length) toast("Everything's in FL. Press play! ▶", "ok");
-  else toast([skipped.length ? `Needs a channel: ${skipped.join(", ")}` : "", failed.length ? `Didn't go in: ${failed.join(", ")} (press Apply again on its card)` : ""].filter(Boolean).join(" · "), "err");
+  else toast([skipped.length ? `Needs a channel: ${skipped.join(", ")}` : "", failed.length ? `Didn't go in: ${failed.join(", ")} (press Add again on its row)` : ""].filter(Boolean).join(" · "), "err");
 }
 
 async function undoPart(name) {
@@ -891,7 +954,6 @@ async function exportPart(body) {
 // ---------- tracks ----------
 function renderTracks() {
   const names = Object.keys(session.parts);
-  $("exportAll").disabled = !names.length;
   if (!names.length) {
     $("trackGrid").replaceChildren(h("div", { class: "empty" }, illustration("sketch", 64), h("b", {}, "Nothing in FL yet"),
       "Parts you add from Studio show up here, so you can undo them, go back a version or save them as MIDI.",
@@ -918,13 +980,13 @@ async function trackOp(path, name, label) {
   const r = await withPending(() => api(path, { name }), label);
   if (r) toast(r.ok ? "Done ✓" : r.message, r.ok ? "ok" : "err");
 }
-$("exportAll").addEventListener("click", async () => {
+async function exportAll() {
   let directory;
   if (window.velouraNative && window.velouraNative.chooseFolder) { directory = await window.velouraNative.chooseFolder(); if (directory === null) return; }
   let last;
   for (const n of Object.keys(session.parts)) last = await api("/api/export", { name: n, directory }).catch((e) => toast(e.message, "err"));
   if (last && last.path) { toast("All parts saved as MIDI ✓", "ok"); api("/api/reveal", { path: last.path }); }
-});
+}
 
 // ---------- setup ----------
 // The reconnect order that reliably brings Veloura and FL back together. One copy for the whole UI; the service's
@@ -979,10 +1041,11 @@ const STEP_INFO = {
         h("p", { class: "muted" }, "This step turns green as soon as FL answers. FL remembers it.")];
     } },
   pianoroll: { title: "Link the bridge", done: "Linked",
-    body: () => [h("p", {}, "Each time FL starts: open a Piano Roll, then ", h("kbd", {}, "Tools ▸ Scripts ▸ veloura_bridge"), "."),
+    body: () => [h("p", {}, "Each time FL starts: open a Piano Roll, then choose ", h("kbd", {}, "Tools ▸ Scripts ▸ veloura_bridge"), "."),
       bridgeMock(),
-      h("button", { class: "btn primary small", onclick: async () => { const r = await withPending(() => api("/api/test-bridge", {}), "Checking…"); if (r) toast(r.ok ? "Linked ✓" : r.message, r.ok ? "ok" : "err"); refreshSetup(); } }, "Check"),
-      h("details", { class: "reconnect-details" }, h("summary", {}, "If it won't connect"), reconnectList())] },
+      h("details", { class: "reconnect-details inline" },
+        h("summary", {}, h("button", { class: "btn primary small", type: "button", onclick: async (e) => { e.preventDefault(); const r = await withPending(() => api("/api/test-bridge", {}), "Checking…"); if (r) toast(r.ok ? "Linked ✓" : r.message, r.ok ? "ok" : "err"); refreshSetup(); } }, "Check"),
+          h("span", { class: "link-quiet" }, "If it won't connect")), reconnectList())] },
   kits: { title: "Pick your drum kit folder", done: "Kits added",
     body: () => [h("p", {}, "Choose the folder with your drum kits. Veloura sorts them into kicks, snares, hats and 808s."),
       h("button", { class: "btn primary small", onclick: async () => { const r = await withPending(() => api("/api/library/add-folder", {}), "Adding your kits…"); if (r && r.ok !== false) { toast("Kits added. Sorting them now.", "ok"); refreshSetup(); } } }, "Choose folder…")] },
@@ -1045,7 +1108,7 @@ function chatgptSheet() {
     h("h3", {}, cg.signed_in ? "ChatGPT is connected" : "Connect ChatGPT and Veloura"),
     h("div", { class: "sheet-option" }, h("span", { class: "opt-icon" }, brandLogo("chatgpt", 16)),
       h("div", {}, h("b", {}, "Use your ChatGPT plan"),
-        h("small", {}, cg.signed_in ? cg.detail : "Veloura uses usage from your ChatGPT plan's limits. Needs a paid plan: ChatGPT Go, Plus or Pro."))),
+        h("small", {}, cg.signed_in ? cg.detail : "Veloura uses usage from your ChatGPT plan's limits. Needs a paid plan (Go, Plus or Pro). We recommend Plus."))),
     cg.signed_in
       ? h("div", { class: "sheet-row" },
           h("a", { class: "cg-btn ghost", href: CHATGPT_USAGE, target: "_blank" }, "Manage usage"),
@@ -1059,30 +1122,38 @@ function chatgptSheet() {
       h("button", { class: "cg-btn ghost", onclick: () => useProvider("offline") }, "Use Offline")) : null,
     h("p", { class: "sheet-foot" }, "Veloura never sees your ChatGPT password or chats. You can manage this connection anytime in ChatGPT settings."));
 }
+// Waiting labels for the step being worked on (the right side of its row).
+const STEP_WAIT = { ai: "Not connected", keys: "Waiting for macOS", midi: "Waiting for FL", pianoroll: "Waiting for FL", kits: "Choose a folder" };
+const setupOpen = new Set();   // steps the user opened by hand
 function renderSetup() {
   if (!session) return;
   const steps = setup ? setup.steps : stepsFromStatus(status), checking = steps.some((s) => s.ok === null);
   const okCount = steps.filter((s) => s.ok).length, firstOpen = checking ? -1 : steps.findIndex((s) => !s.ok);
   $("setupProgress").style.width = (okCount / steps.length * 100) + "%";
+  $("setupCount").textContent = checking ? "" : `${okCount} of ${steps.length}`;
   const onboarding = !session.settings.onboarded;
-  $("setupTitle").textContent = onboarding ? "Welcome to Veloura Beta" : "Setup";
+  $("setupEyebrow").textContent = onboarding ? "Welcome to Veloura Beta" : "One-time setup";
+  $("setupTitle").textContent = "Connect to FL Studio";
   $("setupSub").textContent = checking ? "Checking your setup…" : okCount === steps.length ? "Everything is connected. Let's make something."
-    : `${okCount} of ${steps.length} done. Each step turns green by itself.`;
+    : "Five quick steps. Each one turns green by itself when it is done.";
   // the reconnect order helps people who were set up and lost the connection, not someone setting up for the first time
-  const flTrouble = !checking && !!session.settings.onboarded && steps.some((s) => !s.ok && ["midi", "pianoroll"].includes(s.id));
+  const flTrouble = !checking && !!session.settings.onboarded && steps.some((s) => !s.ok && s.id === "midi");   // the bridge step has its own "If it won't connect"
   $("setupReconnect").hidden = !flTrouble;
   $("setupReconnect").replaceChildren(h("b", {}, "Can't connect? Do these in order:"), reconnectList());
   $("steps").replaceChildren(...steps.map((s, i) => {
-    const info = STEP_INFO[s.id];
-    const st = s.id === "ai" && s.ok ? `${providerName(s.provider)} connected` : info.done;
-    return h("li", { class: "step" + (s.ok ? " ok" : "") + (s.ok === null ? " checking" : "") + (i === firstOpen ? " current" : "") },
-      h("span", { class: "step-num" }, s.ok ? "✓" : String(i + 1)),
-      h("div", {}, h("h3", {}, info.title, h("span", { class: "state" }, s.ok ? "· " + st : s.ok === null ? "· Checking…" : "")),
-        h("div", { class: "step-detail" }, info.body())));
+    const info = STEP_INFO[s.id], current = i === firstOpen, open = !s.ok && (current || setupOpen.has(s.id));
+    const state = s.ok ? (s.id === "ai" ? `${providerName(s.provider)} · connected` : info.done)
+      : s.ok === null ? "Checking…" : current ? STEP_WAIT[s.id] : "Next";
+    const toggle = () => { if (s.ok || current) return; setupOpen.has(s.id) ? setupOpen.delete(s.id) : setupOpen.add(s.id); renderSetup(); };
+    return h("li", { class: "step" + (s.ok ? " ok" : "") + (s.ok === null ? " checking" : "") + (current ? " current" : "") + (open ? " open" : "") + (!s.ok && !current ? " later" : "") },
+      h("button", { class: "step-head", type: "button", onclick: toggle, "aria-expanded": open ? "true" : "false" },
+        h("span", { class: "step-num" }, s.ok ? svg(["M5 12.5l4.5 4.5L19 7.5"]) : String(i + 1)),
+        h("h3", {}, info.title), h("span", { class: "state" }, state)),
+      open ? h("div", { class: "step-detail" }, info.body()) : null);
   }));
   const coreOk = steps.filter((s) => s.id !== "kits").every((s) => s.ok);
-  $("startMaking").textContent = coreOk ? "Start making music →" : "Continue to Studio anyway";
-  $("startMaking").className = "btn big " + (coreOk ? "primary" : "");
+  $("startMaking").textContent = "Start making music →";
+  $("startMaking").className = "btn big " + (coreOk ? "primary" : "quiet");
   $("skipSetup").hidden = !onboarding || coreOk;
 }
 const finishSetup = async () => { await api("/api/settings", { onboarded: true }); await refreshSession(); showPage("studio"); };
@@ -1093,7 +1164,7 @@ $("skipSetup").addEventListener("click", finishSetup);
 // The AI options, recommended first. "claude-code" (a personal Claude login) only exists in the developer's developer copy;
 // the service lists which ones this build offers (session.app.providers).
 const PROVIDER_INFO = {
-  chatgpt: ["ChatGPT", "Recommended · needs ChatGPT Go, Plus or Pro"],
+  chatgpt: ["ChatGPT", "Recommended · a paid plan, Plus is the best pick"],
   anthropic: ["Claude API", "Your API key · pay Anthropic per use"],
   gemini: ["Google Gemini", "Your API key · free tier available"],
   offline: ["Offline composer", "Simple patterns · not AI"],
@@ -1101,8 +1172,20 @@ const PROVIDER_INFO = {
 };
 const offeredProviders = () => (((session && session.app) || {}).providers || ["chatgpt", "anthropic", "gemini", "offline"])
   .filter((id) => PROVIDER_INFO[id]).map((id) => [id, ...PROVIDER_INFO[id]]);
+function renderThemes() {
+  const cur = (session.settings.theme && THEMES.some((t) => t.id === session.settings.theme)) ? session.settings.theme : "champagne";
+  $("themeGrid").replaceChildren(...THEMES.map((t) => h("button", { class: "theme-card" + (t.id === cur ? " sel" : ""), type: "button", "aria-pressed": t.id === cur ? "true" : "false",
+    onclick: async () => {
+      applyTheme(t.id); session.settings.theme = t.id; renderThemes();
+      try { await api("/api/settings", { theme: t.id }); } catch (e) { toast(e.message, "err"); }
+    } },
+    h("span", { class: "tc-swatch", style: `--s1:${t.sw[0]};--s2:${t.sw[1]};--s3:${t.sw[2]};--sbg:${t.bg}` }, h("i"), h("i"), h("i"), h("i")),
+    h("span", { class: "tc-name" }, t.name), h("small", {}, t.note),
+    t.id === cur ? h("span", { class: "tc-check" }, svg(["M5 12.5l4.5 4.5L19 7.5"])) : null)));
+}
 function renderSettings() {
   const s = session.settings, pv = (status && status.providers) || {};
+  renderThemes();
   $("providerGrid").replaceChildren(...offeredProviders().map(([id, name, sub]) => h("button", { class: "provider brand-" + id + (s.provider === id ? " sel" : ""),
     onclick: async () => { await api("/api/settings", { provider: id }); await refreshSession(); await refreshStatus(); forceRender(); } },
     h("span", { class: "dot " + ((pv[id] || {}).available ? "ok" : "") }), providerHead(id, name), h("small", {}, sub))));
@@ -1187,18 +1270,19 @@ function render() {
     status && ((status.controller || {}).channels || []).map((c) => c.name).join("|")];
   if (page === "studio") {
     if (changed("chat", [session.messages, session.proposals, session.parts, live])) renderChat();
-    if (changed("chips", [session.messages.length > 0, Object.keys(session.parts).length > 0])) renderChips();
+    if (changed("chips", [session.messages.length, Object.keys(session.parts), session.settings.genre, pending > 0])) renderChips();
     if (changed("composer", [attached, genreChip, session.references && Object.keys(session.references), session.settings.genre, Object.keys(genreInfo).length])) { renderAttachment(); renderModeChip(); }
     if (changed("pills", [session.settings, status && status.controller, Object.keys(genreInfo).length])) renderPills();
     if (changed("prep", [prep, session.settings.remind_loop, session.settings.remind_cut])) renderPrepBanner();
-    if (changed("rackbase", [rackOpen])) renderRack();
+    if (changed("rackbase", [rackOpen, session.messages.length > 0])) { renderRack(); if (rackWanted()) refreshRack(); }
   }
   if (page === "tracks" && changed("tracks", [session.parts, pending > 0, session.arrangement, session.settings.locked_parts, beatRackSig()])) { renderTracks(); renderBeat(); }
   if (page === "sounds" && changed("sounds", [libState, kitState, status && (status.controller || {}).channels])) renderSounds();
-  if (page === "studio" && changed("hero", [session.messages.length > 0, session.settings.genre, session.settings.feel, genreChip, Object.keys(genreInfo).length, session.parts])) renderHero();
+  if (page === "studio" && changed("hero", [session.messages.length > 0, session.settings.genre, genreChip, Object.keys(genreInfo).length, session.parts, session.project])) renderHero();
   if (page === "setup") renderSetup();
   if (page === "help" && changed("about", [session.app])) renderAbout();
   if (page === "settings" && changed("settings", [session.settings, session.events.length, status && status.providers])) renderSettings();
+  if (changed("theme", [session.settings.theme])) applyTheme(session.settings.theme);
 }
 function forceRender() { for (const k of Object.keys(lastSig)) delete lastSig[k]; render(); }
 function fillKeySelects() {
@@ -1209,12 +1293,13 @@ function fillKeySelects() {
   try { genreInfo = await api("/api/genres", {}); } catch (_) {}
   await Promise.all([refreshSession(), refreshStatus()]);
   refreshPrep();
+  if (session) { rackOpen = session.settings.rack_open !== false; applyTheme(session.settings.theme); }
   if (session && !session.settings.onboarded) showPage("setup"); else forceRender();
   setInterval(refreshStatus, 5000);
   setInterval(() => { if (!pending && page !== "settings") refreshSession(); }, 3000);
   setInterval(() => { if (page === "setup") refreshSetup(); }, 3000);
   setInterval(refreshPrep, 15000);
-  setRackOpen(rackOpen);
+  applyRackVisibility();
   setInterval(refreshRack, 2000);
 })();
 
@@ -1274,17 +1359,20 @@ function openFeedback() {
   msg.focus();
 }
 
+const INSTAGRAM = "https://www.instagram.com/veloura.interface/";
 function renderAbout() {
   const app = (session && session.app) || {};
   $("aboutCard").replaceChildren(
     h("div", { class: "about-head" }, h("span", { class: "logo", "aria-hidden": "true" }, h("i"), h("i"), h("i"), h("i")),
       h("div", {}, h("h3", {}, "Veloura ", h("span", { class: "beta-tag" }, "Beta")),
-        h("small", {}, `Version ${app.version || "0.9.0"}${app.dev_mode ? " · developer mode" : ""} · Valenti Labs`))),
+        h("small", {}, `Version ${app.version || "0.9.1"}${app.dev_mode ? " · developer mode" : ""} · Valenti Labs`))),
     h("p", { class: "muted" }, "Beta software, provided as is. It may have bugs. Back up your projects. 18+. You pay your AI provider directly."),
     h("div", { class: "row-btns" },
       h("button", { class: "btn small primary", onclick: openFeedback }, "Send feedback"),
       h("button", { class: "btn small", onclick: () => openTextPanel("License", LICENSE_TEXT) }, "License"),
-      h("button", { class: "btn small", onclick: () => openTextPanel("Privacy", PRIVACY_TEXT) }, "Privacy")));
+      h("button", { class: "btn small", onclick: () => openTextPanel("Privacy", PRIVACY_TEXT) }, "Privacy"),
+      h("a", { class: "btn small quiet insta", href: INSTAGRAM, target: "_blank", rel: "noopener" },
+        svg(["M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4z", "M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z", "M17.5 6.5h.01"]), "@veloura.interface")));
 }
 $("brandBtn").addEventListener("click", () => { showPage("help"); renderAbout(); });
 
@@ -1298,7 +1386,7 @@ $("brandBtn").addEventListener("click", () => { showPage("help"); renderAbout();
   const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let i = 0;
   setInterval(() => {
-    if (box.value || document.hidden) return;
+    if (box.value || document.hidden || !$("page-studio").classList.contains("fresh")) return;
     i = (i + 1) % LINES.length;
     if (calm) { box.placeholder = LINES[i]; return; }
     box.classList.add("ph-fade");

@@ -311,6 +311,23 @@ class InferenceTests(unittest.TestCase):
             chatgpt.generate("S", "m", {}, store=self.store, opener=self.opener([lines, lines]), sleep=waits.append)
         self.assertEqual(waits, [])
 
+    def test_dropped_connection_is_retried_once_then_explained(self):
+        ok = sse({"type": "response.output_text.delta", "delta": "{}"}, {"type": "response.completed", "response": {}})
+        waits = []
+        text, _, _ = chatgpt.generate("S", "m", {}, store=self.store, opener=self.opener([ConnectionResetError(54, "reset"), ok]),
+                                      sleep=waits.append)
+        self.assertEqual((text, waits), ("{}", [2]))
+        with self.assertRaises(chatgpt.ChatGPTError) as c:   # never a bare "internal error"
+            chatgpt.generate("S", "m", {}, store=self.store, sleep=waits.append,
+                             opener=self.opener([ConnectionResetError(54, "reset"), ConnectionResetError(54, "reset")]))
+        self.assertIn("connection to ChatGPT dropped", str(c.exception))
+
+    def test_read_timeout_is_explained(self):
+        import socket
+        with self.assertRaises(chatgpt.ChatGPTError) as c:
+            chatgpt.generate("S", "m", {}, store=self.store, opener=self.opener([socket.timeout("timed out")]))
+        self.assertIn("took too long", str(c.exception))
+
     def test_stream_without_completed_is_an_error(self):
         lines = sse({"type": "response.output_text.delta", "delta": "{"})
         with self.assertRaises(chatgpt.ChatGPTError):
