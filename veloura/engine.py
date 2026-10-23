@@ -37,7 +37,7 @@ DEFAULT_SETTINGS = {
     "onboarded": False, "auto_tempo": True, "tempo_auto": False, "key_auto": True, "bars_auto": True,
     "remind_loop": True, "remind_cut": True, "careful": False,
     "feel": {}, "locked_parts": [], "quality": "fast", "use_my_style": False, "auto_mixer": True, "auto_sounds": True, "guide_arrow": True, "listen_after": True,
-    "kit_auto_load": False, "theme": "champagne", "rack_open": True,
+    "kit_auto_load": False, "theme": "champagne", "rack_open": True, "protect_master": True,
 }
 THEMES = ("champagne", "rose-gold", "platinum", "lilac", "amber-noir")
 REF_DIR = os.path.join(DATA_DIR, "references")
@@ -106,6 +106,7 @@ class _NoTarget(Exception):
 class Engine:
     def __init__(self, session_file=SESSION_FILE, trigger=fl_trigger, timeout=5.0, controller=None):
         self.controller = controller or ControllerLink()
+        self._guard_master()
         self._ctl_cache = (0, None)
         self.session_file = session_file
         self.trigger = trigger
@@ -368,6 +369,68 @@ class Engine:
         return {"ok": ok, "channel": after, "message": ("Loaded %s." % stem) if ok else
                 "FL didn't confirm the new sound on %s." % before}
 
+    # ---------- FL's Master is protected: Veloura never leaves it muted ----------
+    # With "protect_master" on (the default) Veloura never mutes or unmutes the Master by itself: every set_mix
+    # request goes through _guard_master, which drops Master mute changes unless the user pressed "Unmute Master"
+    # (or turned protection off). When protection is off and Veloura mutes the Master for a Browser walk, it leaves a
+    # marker file first, so an interrupted walk is always undone later (startup, the next status check).
+
+    def _master_marker(self):
+        return os.path.join(DATA_DIR, "master_muted_by_veloura")
+
+    def _guard_master(self):
+        raw = self.controller.request
+        eng = self
+        eng._master_write_ok = False
+
+        def request(op, params=None, *a, **kw):
+            if op == "set_mix" and params and not eng._master_write_ok:
+                changes = params.get("changes") or []
+                is_master = [c.get("kind") == "mixer_mute" and int(c.get("track", -1)) == 0 for c in changes]
+                if any(is_master):
+                    keep = [c for c, m in zip(changes, is_master) if not m]
+                    res = raw(op, dict(params, changes=keep), *a, **kw)["results"] if keep else []
+                    it = iter(res)
+                    merged = [{"ok": False, "skipped": "FL's Master is protected"} if m else next(it, {"ok": False}) for m in is_master]
+                    return {"results": merged}
+            return raw(op, params, *a, **kw)
+        try:
+            self.controller.request = request
+        except AttributeError:
+            pass
+
+    def master_muted(self):
+        """True/False from FL, None when FL can't be asked."""
+        try:
+            st = self.controller.request("mix_state", timeout=3.0)
+            return next((bool(t["muted"]) for t in st["tracks"] if t["track"] == 0), None)
+        except (ControllerUnavailable, ControllerError, KeyError, TypeError):
+            return None
+
+    def unmute_master(self, by_user=True):
+        """The visible "Unmute Master" button (always allowed: the user asked) and the clean-up of Veloura's own mute."""
+        self._master_write_ok = True
+        try:
+            with self.fl_lock:
+                ok = self._set_master_mute(False, wait=3.0)
+        finally:
+            self._master_write_ok = False
+        if ok:
+            try:
+                os.remove(self._master_marker())
+            except OSError:
+                pass
+            if by_user:
+                self.event("ok", "Unmuted FL's Master.")
+        return {"ok": bool(ok), "muted": not ok}
+
+    def restore_master_if_ours(self):
+        """If an earlier Browser walk muted the Master and was interrupted, unmute it now."""
+        if os.path.exists(self._master_marker()) and self.master_muted():
+            r = self.unmute_master(by_user=False)
+            if r["ok"]:
+                self.event("info", "Unmuted FL's Master (an earlier kit load had muted it).")
+
     def _set_master_mute(self, value, wait=2.0):
         """Mute/unmute FL's Master and wait until FL confirms it (FL 2026 applies mutes a moment later)."""
         end = time.time() + wait
@@ -387,23 +450,33 @@ class Engine:
         class Quiet:
             def __enter__(self_):
                 self_.was = None
+                if eng.state["settings"].get("protect_master", True):
+                    return self_   # protected: Veloura doesn't touch the Master at all
                 try:
                     st = eng.controller.request("mix_state", timeout=4.0)
                     self_.was = next((t["muted"] for t in st["tracks"] if t["track"] == 0), False)
+                    if self_.was and os.path.exists(eng._master_marker()):
+                        self_.was = False   # muted by an earlier, interrupted walk of ours: still ours to undo
                     if not self_.was:
-                        eng._set_master_mute(True)
-                except (ControllerUnavailable, ControllerError):
+                        open(eng._master_marker(), "w").close()   # written BEFORE muting, so it can always be undone
+                        eng._master_write_ok = True
+                        try:
+                            eng._set_master_mute(True)
+                        finally:
+                            eng._master_write_ok = False
+                except (ControllerUnavailable, ControllerError, OSError):
                     pass
                 return self_
 
             def __exit__(self_, *exc):
                 if self_.was is False:
-                    for _ in range(3):
+                    for _ in range(5):
                         try:
-                            if eng._set_master_mute(False, wait=3.0):
+                            if eng.unmute_master(by_user=False)["ok"]:
                                 break
                         except (ControllerUnavailable, ControllerError):
-                            time.sleep(0.5)
+                            pass
+                        time.sleep(0.5)
                 return False
         return Quiet()
 
@@ -1057,6 +1130,10 @@ class Engine:
             providers = f_prov.result()
         if fl and ctl.get("channels"):
             self.refresh_routes(ctl["channels"])
+        master_muted = None
+        if fl and ctl.get("connected"):
+            self.restore_master_if_ours()
+            master_muted = self.master_muted()
         return {
             "fl_running": fl,
             "accessibility": acc,
@@ -1073,6 +1150,7 @@ class Engine:
             "connection_hint": self._connection_hint(fl),
             "reconnect_steps": RECONNECT_STEPS,
             "kit_folders": len(self.library.data.get("folders") or []),
+            "master_muted": master_muted,
         }
 
     def _connection_hint(self, fl):
@@ -1217,7 +1295,7 @@ class Engine:
         allowed = {"tempo_bpm", "key", "bars", "genre", "mood", "swing", "provider", "model", "gemini_model", "chatgpt_model",
                    "onboarded", "auto_tempo", "tempo_auto", "key_auto", "bars_auto", "remind_loop", "remind_cut", "careful",
                    "feel", "locked_parts", "quality", "use_my_style", "auto_mixer", "auto_sounds", "guide_arrow", "listen_after", "kit_auto_load",
-                   "theme", "rack_open"}
+                   "theme", "rack_open", "protect_master"}
         with self.state_lock:
             for k, v in changes.items():
                 if k not in allowed:
@@ -1247,7 +1325,8 @@ class Engine:
                     v = str(v)[:60]
                     self.state["settings"]["model_chosen"] = True   # a deliberate pick is never moved by a default change
                 elif k in ("onboarded", "auto_tempo", "tempo_auto", "key_auto", "bars_auto", "remind_loop", "remind_cut", "careful",
-                           "use_my_style", "auto_mixer", "auto_sounds", "guide_arrow", "listen_after", "kit_auto_load", "rack_open"):
+                           "use_my_style", "auto_mixer", "auto_sounds", "guide_arrow", "listen_after", "kit_auto_load", "rack_open",
+                           "protect_master"):
                     v = bool(v)
                 else:
                     v = str(v)[:60]
