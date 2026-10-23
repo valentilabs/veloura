@@ -196,6 +196,8 @@ def make_handler(engine, token, port_ref):
                     return feedback.send(b.get("message"), b.get("email"))
                 except feedback.FeedbackError as e:
                     raise EngineError(str(e))
+            if path == "/api/master/unmute":
+                return engine.unmute_master(by_user=True)
             if path == "/api/rack":
                 return engine.rack_state(bool(b.get("all")))
             if path == "/api/rack/pattern":

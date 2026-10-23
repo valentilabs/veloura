@@ -158,6 +158,19 @@ const scriptsOk = (st) => st.bridge_script === "installed and up to date" && st.
 const providerName = (p) => ({ chatgpt: "ChatGPT", offline: "Offline composer", gemini: "Gemini", "claude-code": "Claude", anthropic: "Claude API" }[p] || p || "");
 function renderStatus() {
   if (!status) return;
+  // FL's Master muted (by anyone): always say so, with a one-click fix, in the Channel Rack panel and above Studio
+  const mm = status.fl_running && status.master_muted === true;
+  $("masterAlert").hidden = !mm;
+  document.body.classList.toggle("master-muted", mm);
+  // when the Channel Rack panel isn't on screen (hidden, narrow window, another page), float the same alert on top
+  let mfloat = document.getElementById("masterFloat");
+  if (!mfloat) {
+    mfloat = $("masterAlert").cloneNode(true); mfloat.id = "masterFloat"; mfloat.classList.add("floating");
+    mfloat.querySelector("button").id = "masterUnmuteFloat";
+    mfloat.querySelector("button").addEventListener("click", () => $("masterUnmute").click());
+    document.body.appendChild(mfloat);
+  }
+  mfloat.hidden = !mm || !!$("masterAlert").offsetParent;
   let cls = "ok", text = "Ready";
   if (!status.fl_running) { cls = "bad"; text = "FL closed"; }
   else if (!status.accessibility || !scriptsOk(status)) { cls = "warn"; text = "Setup"; }
@@ -1230,6 +1243,7 @@ function renderSettings() {
     $("setRemindCut").checked = s.remind_cut !== false;
     $("setCareful").checked = !!s.careful;
     $("setKitAuto").checked = !!s.kit_auto_load;
+    $("setProtectMaster").checked = s.protect_master !== false;
     $("setGuideArrow").checked = s.guide_arrow !== false;
     $("setListenAfter").checked = s.listen_after !== false;
     $("setQuality").checked = s.quality !== "fast";
@@ -1239,6 +1253,13 @@ function renderSettings() {
 }
 $("setListenAfter").addEventListener("change", async () => { await api("/api/settings", { listen_after: $("setListenAfter").checked }); await refreshSession(); });
 $("setGuideArrow").addEventListener("change", async () => { await api("/api/settings", { guide_arrow: $("setGuideArrow").checked }); await refreshSession(); if (!$("setGuideArrow").checked) hideReadGuide(); });
+$("setProtectMaster").addEventListener("change", async () => { await api("/api/settings", { protect_master: $("setProtectMaster").checked }); await refreshSession(); });
+$("masterUnmute").addEventListener("click", async () => {
+  const b = $("masterUnmute"); b.disabled = true; b.textContent = "Unmuting…";
+  try { const r = await api("/api/master/unmute", {}); toast(r.ok ? "Master unmuted ✓" : "FL didn't unmute the Master. Click its mute button in FL's Mixer.", r.ok ? "ok" : "err"); }
+  catch (e) { toast(e.message, "err"); }
+  finally { b.disabled = false; b.textContent = "Unmute Master"; await refreshStatus(); }
+});
 $("setKitAuto").addEventListener("change", async () => { await api("/api/settings", { kit_auto_load: $("setKitAuto").checked }); await refreshSession(); });
 $("setCareful").addEventListener("change", async () => { await api("/api/settings", { careful: $("setCareful").checked }); await refreshSession(); });
 $("setQuality").addEventListener("change", async () => { await api("/api/settings", { quality: $("setQuality").checked ? "best" : "fast" }); await refreshSession(); });

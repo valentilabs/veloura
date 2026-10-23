@@ -46,6 +46,7 @@
         <svg viewBox="0 0 40 64"><path class="rg-shaft" d="M21 60c-1.5-7-0.5-14 0.8-21.5 1.2-7.4 0.4-15-0.6-27.5"/><path class="rg-head" d="M11.5 20.5c3.6-4.2 6.1-8.4 9.4-13.3 2.6 4.6 5.4 8.4 8.8 12.6"/></svg>
       </button>
       <aside class="rackpanel" id="rackPanel" aria-label="Channel Rack">
+        <div class="master-alert" id="masterAlert" hidden role="alert"><span class="ma-dot"></span><span><b>FL's Master is muted.</b> You won't hear anything.</span><button class="btn small ma-btn" id="masterUnmute" type="button">Unmute Master</button></div>
         <div class="rp-head"><b>Channel Rack</b><button class="rp-pat" id="rackPat" type="button" title="Patterns in FL"></button><span class="spacer"></span><span class="rp-len" id="rackBars"></span>
           <button class="rp-x" id="rackClose" type="button" title="Hide the Channel Rack" aria-label="Hide the Channel Rack">×</button></div>
         <div class="rp-body" id="rackBody"></div>
@@ -183,6 +184,7 @@
             <label class="toggle full"><input type="checkbox" id="setAutoMixer"><span>Give every channel its own mixer track automatically</span></label>
             <label class="toggle full"><input type="checkbox" id="setListenAfter"><span>After “Add all to FL Studio”, play the beat briefly and check the levels</span></label>
             <label class="toggle full"><input type="checkbox" id="setGuideArrow"><span>Show a little arrow on new replies pointing to where to start reading</span></label>
+            <label class="toggle full"><input type="checkbox" id="setProtectMaster"><span>Protect FL's Master: Veloura never mutes or unmutes it (recommended)</span></label>
             <label class="toggle full"><input type="checkbox" id="setKitAuto"><span>Load kits by walking FL's Browser (slower: FL steps through your sounds with Master muted). Off: Veloura copies the kit into a folder for one drag.</span></label>
             <label class="toggle full"><input type="checkbox" id="setCareful"><span>Careful mode: ask before writing over notes or steps that are already there</span></label>
           </div>
@@ -227,6 +229,7 @@
         <div class="tips">
           <div class="tip-card best">
             <p class="tip"><b>Best way to get a melody:</b> load the sound in FL first, then tell Veloura what to play on it.</p>
+            <p class="tip"><b>Build it one part at a time:</b> ask for the drums, then the 808, then chords, then a melody. Each part is written to fit what's already there, which sounds better than asking for a whole beat in one go.</p>
             <p class="quote">“add slow string chords in ZENOLOGY 2”</p>
           </div>
           <div class="tip-card"><p class="tip"><b>Name your channels clearly.</b> Kick, Snare, Hat, 808. Veloura matches parts to channels by name.</p></div>

@@ -1881,3 +1881,14 @@ body { background:
 #pop .feel-row { display: grid; grid-template-columns: 88px 1fr 92px; gap: 12px; align-items: center; font-size: 13px; }
 #pop .feel-row span:last-child { text-align: right; }
 #pop .feel-row input[type="range"] { width: 100%; padding: 0; border: 0; background: transparent; box-shadow: none; accent-color: var(--accent); }
+
+/* FL's Master muted: impossible to miss, one click to fix (app.js renderStatus) */
+.master-alert { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; padding: 10px 12px; border-radius: 12px;
+  background: color-mix(in srgb, #FF4F5E 16%, var(--surface)); border: 1px solid rgb(255 79 94 / .55); color: var(--text); font-size: 12.5px; }
+.master-alert b { color: #FF8A93; }
+.master-alert .ma-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #FF4F5E; box-shadow: 0 0 10px rgb(255 79 94 / .9);
+  animation: vl-breathe-red 2.4s ease-in-out infinite; }
+.master-alert .ma-btn { margin-left: auto; background: #FF4F5E; color: #fff; border-color: transparent; font-weight: 650; }
+.master-alert .ma-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.master-alert.floating { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1500; margin: 0; max-width: 560px;
+  box-shadow: 0 12px 40px rgb(0 0 0 / .55); }
